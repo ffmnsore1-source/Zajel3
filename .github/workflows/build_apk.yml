@@ -20,17 +20,18 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.x'
+          flutter-version: '3.22.x'
           channel: 'stable'
           cache: true
 
-      - name: Clean and Get Dependencies
+      - name: Prepare Project and Fix Gradle
         run: |
           rm -rf android
           flutter create . --org com.zajel.app --project-name zajel --platforms=android
           flutter pub get
+          flutter precache --android
 
-      - name: Build APK (Debug Mode for Fast & Success Build)
+      - name: Build APK Debug
         run: flutter build apk --debug
 
       - name: Upload APK Artifact
