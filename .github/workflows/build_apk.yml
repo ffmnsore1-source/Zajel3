@@ -24,12 +24,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Prepare Project and Fix Gradle
-        run: |
-          rm -rf android
-          flutter create . --org com.zajel.app --project-name zajel --platforms=android
-          flutter pub get
-          flutter precache --android
+      - name: Get Dependencies
+        run: flutter pub get
 
       - name: Build APK Debug
         run: flutter build apk --debug
