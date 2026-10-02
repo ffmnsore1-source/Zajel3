@@ -31,24 +31,22 @@ jobs:
         run: |
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
-            # ضبط الـ minSdk إلى 23
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # إضافة إعدادات الـ release بشكل آمن ودون تخريب البنية
-            python3 -c "
-            path = '$BUILD_FILE'
-            with open(path, 'r') as f:
-                content = f.read()
-            
-            if 'minifyEnabled' not in content:
-                target = 'buildTypes {'
-                replacement = 'buildTypes {\n        release {\n            minifyEnabled false\n            shrinkResources false\n            signingConfig signingConfigs.debug\n        }'
-                if target in content:
-                    content = content.replace(target, replacement, 1)
-                    with open(path, 'w') as f:
-                        f.write(content)
-            "
+            python3 -c '
+          path = "android/app/build.gradle"
+          with open(path, "r") as f:
+              content = f.read()
+
+          if "minifyEnabled" not in content:
+              target = "buildTypes {"
+              replacement = "buildTypes {\n        release {\n            minifyEnabled false\n            shrinkResources false\n            signingConfig signingConfigs.debug\n        }"
+              if target in content:
+                  content = content.replace(target, replacement, 1)
+                  with open(path, "w") as f:
+                      f.write(content)
+          '
           fi
 
       - name: Inject Full Original Zajel App Code with Real Media & Voice Fixed
