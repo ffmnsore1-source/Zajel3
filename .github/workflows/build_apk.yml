@@ -27,10 +27,47 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Inject Full Original Zajel App Code Fixed
+      - name: Update minSdk to 23 for Plugins
         run: |
+          BUILD_FILE="android/app/build.gradle"
+          if [ -f "$BUILD_FILE" ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
+          fi
+
+      - name: Inject Full Original Zajel App Code with Real Media & Voice Fixed
+        run: |
+          cat << 'EOF' > pubspec.yaml
+          name: zajel
+          description: "A new Flutter project."
+          publish_to: 'none'
+          version: 1.0.0+1
+
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+
+          dependencies:
+            flutter:
+              sdk: flutter
+            image_picker: ^1.0.7
+            record: ^5.1.2
+            audioplayers: ^6.0.0
+
+          dev_dependencies:
+            flutter_test:
+              sdk: flutter
+            flutter_lints: ^3.0.0
+
+          flutter:
+            uses-material-design: true
+          EOF
+
           cat << 'EOF' > lib/main.dart
+          import 'dart:io';
           import 'package:flutter/material.dart';
+          import 'package:image_picker/image_picker.dart';
+          import 'package:record/record.dart';
+          import 'package:audioplayers/audioplayers.dart';
 
           void main() {
             runApp(const ZajelApp());
@@ -962,13 +999,19 @@ jobs:
             final ValueNotifier<bool> _isTypingNotifier = ValueNotifier<bool>(false);
             final List<Map<String, dynamic>> _messages = [];
 
+            final ImagePicker _picker = ImagePicker();
+            late final AudioRecorder _audioRecorder;
+            late final AudioPlayer _audioPlayer;
+
             bool _isRecordingActive = false;
             bool _isLocked = false;
-            double _dragOffset = 0.0;
+            double _currentDragY = 0.0;
 
             @override
             void initState() {
               super.initState();
+              _audioRecorder = AudioRecorder();
+              _audioPlayer = AudioPlayer();
               _textController.addListener(() {
                 _isTypingNotifier.value = _textController.text.trim().isNotEmpty;
               });
@@ -984,6 +1027,8 @@ jobs:
             void dispose() {
               _textController.dispose();
               _isTypingNotifier.dispose();
+              _audioRecorder.dispose();
+              _audioPlayer.dispose();
               super.dispose();
             }
 
@@ -998,6 +1043,20 @@ jobs:
                 });
               });
               _textController.clear();
+            }
+
+            Future<void> _pickAndSendImage(ImageSource source) async {
+              final XFile? image = await _picker.pickImage(source: source);
+              if (image != null) {
+                setState(() {
+                  _messages.add({
+                    'type': 'image',
+                    'content': image.path,
+                    'time': '8:30 م',
+                    'isMe': 'true'
+                  });
+                });
+              }
             }
 
             void _showAttachmentMenu(bool isDark) {
@@ -1018,10 +1077,10 @@ jobs:
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () { Navigator.pop(context); _addAttachmentMessage('📷 صورة مرفقة'); }),
-                            _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); _addAttachmentMessage('📸 صورة كاميرا'); }),
-                            _buildAttachmentItem(icon: Icons.person_rounded, color: Colors.orangeAccent, title: 'جهة اتصال', onTap: () { Navigator.pop(context); _addAttachmentMessage('👤 جهة اتصال'); }),
-                            _buildAttachmentItem(icon: Icons.insert_drive_file_rounded, color: Colors.blueAccent, title: 'مستند', onTap: () { Navigator.pop(context); _addAttachmentMessage('📄 ملف مستند'); }),
+                            _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () { Navigator.pop(context); _pickAndSendImage(ImageSource.gallery); }),
+                            _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); _pickAndSendImage(ImageSource.camera); }),
+                            _buildAttachmentItem(icon: Icons.person_rounded, color: Colors.orangeAccent, title: 'جهة اتصال', onTap: () { Navigator.pop(context); _addTextMsg('👤 جهة اتصال'); }),
+                            _buildAttachmentItem(icon: Icons.insert_drive_file_rounded, color: Colors.blueAccent, title: 'مستند', onTap: () { Navigator.pop(context); _addTextMsg('📄 ملف مستند'); }),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -1030,6 +1089,12 @@ jobs:
                   );
                 },
               );
+            }
+
+            void _addTextMsg(String content) {
+              setState(() {
+                _messages.add({'type': 'text', 'content': content, 'time': '8:30 م', 'isMe': 'true'});
+              });
             }
 
             Widget _buildAttachmentItem({required IconData icon, required Color color, required String title, required VoidCallback onTap}) {
@@ -1046,60 +1111,68 @@ jobs:
               );
             }
 
-            void _addAttachmentMessage(String content) {
-              setState(() {
-                _messages.add({'type': 'text', 'content': content, 'time': '8:30 م', 'isMe': 'true'});
-              });
+            Future<void> _startRecording() async {
+              try {
+                if (await _audioRecorder.hasPermission()) {
+                  await _audioRecorder.start(
+                    const RecordConfig(encoder: AudioEncoder.aacLc),
+                    path: '',
+                  );
+                  setState(() {
+                    _isRecordingActive = true;
+                    _isLocked = false;
+                    _currentDragY = 0.0;
+                  });
+                }
+              } catch (e) {
+                debugPrint('خطأ في التسجيل: $e');
+              }
             }
 
-            void _startRecording() {
-              setState(() {
-                _isRecordingActive = true;
-                _isLocked = false;
-                _dragOffset = 0.0;
-              });
-            }
-
-            void _updateRecordingDrag(double verticalDrag) {
+            void _updateRecording(DragUpdateDetails details) {
               if (!_isRecordingActive) return;
               setState(() {
-                _dragOffset = verticalDrag;
-                if (_dragOffset < -45) {
+                _currentDragY += details.delta.dy;
+                if (_currentDragY < -40) {
                   _isLocked = true;
                 }
               });
             }
 
-            void _endRecording() {
+            Future<void> _endRecording() async {
               if (!_isRecordingActive) return;
-              if (_isLocked) {
-                // If locked, don't auto send on release, wait for user manual action
-                return;
+              if (_isLocked) return;
+              
+              final path = await _audioRecorder.stop();
+              setState(() {
+                _isRecordingActive = false;
+                _isLocked = false;
+                _currentDragY = 0.0;
+                if (path != null) {
+                  _messages.add({
+                    'type': 'voice',
+                    'content': path,
+                    'time': '8:35 م',
+                    'isMe': 'true'
+                  });
+                }
+              });
+            }
+
+            Future<void> _cancelRecording() async {
+              await _audioRecorder.stop();
+              setState(() {
+                _isRecordingActive = false;
+                _isLocked = false;
+                _currentDragY = 0.0;
+              });
+            }
+
+            Future<void> _playVoice(String path) async {
+              if (path.isNotEmpty) {
+                Source urlSource = DeviceFileSource(path);
+                await _audioPlayer.play(urlSource);
               }
-              // Normal release: auto send voice message
-              _sendRecordedVoice();
-            }
-
-            void _sendRecordedVoice() {
-              setState(() {
-                _isRecordingActive = false;
-                _isLocked = false;
-                _dragOffset = 0.0;
-                _messages.add({
-                  'type': 'voice',
-                  'content': '🎤 تسجيل صوتي • 0:05',
-                  'time': '8:35 م',
-                  'isMe': 'true'
-                });
-              });
-            }
-
-            void _cancelRecording() {
-              setState(() {
-                _isRecordingActive = false;
-                _isLocked = false;
-                _dragOffset = 0.0;
-              });
             }
 
             @override
@@ -1183,7 +1256,7 @@ jobs:
                                 itemBuilder: (context, index) {
                                   final msg = _messages[index];
                                   final isMe = msg['isMe'] == 'true';
-                                  final isVoice = msg['type'] == 'voice';
+                                  final type = msg['type'];
 
                                   return Align(
                                     alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -1202,57 +1275,44 @@ jobs:
                                             : (isDark ? const Color(0xFF1E172B) : Colors.grey.shade100),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
-                                      child: isVoice
-                                          ? Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                      child: type == 'voice'
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    CircleAvatar(
-                                                      radius: 18,
-                                                      backgroundColor: isMe ? (isDark ? const Color(0xFFEADBFF) : Colors.white) : (isDark ? const Color(0xFFEADBFF) : Colors.blue),
-                                                      child: Icon(Icons.play_arrow_rounded, color: isMe ? (isDark ? const Color(0xFF351563) : Colors.blue) : Colors.white, size: 22),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Flexible(
-                                                      child: Row(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          _buildAudioBar(6, isMe, isDark), _buildAudioBar(10, isMe, isDark), _buildAudioBar(14, isMe, isDark), _buildAudioBar(20, isMe, isDark),
-                                                          _buildAudioBar(26, isMe, isDark), _buildAudioBar(20, isMe, isDark), _buildAudioBar(12, isMe, isDark), _buildAudioBar(8, isMe, isDark),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
+                                                IconButton(
+                                                  icon: Icon(Icons.play_arrow_rounded, color: isMe ? Colors.white : Colors.blue, size: 24),
+                                                  onPressed: () => _playVoice(msg['content']),
                                                 ),
-                                                const SizedBox(height: 6),
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('0:05', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                                    Text(msg['time']!, style: TextStyle(fontSize: 10, color: isMe ? Colors.white54 : Colors.grey)),
-                                                  ],
-                                                ),
+                                                const Text('رسالة صوتية حقيقية 🎤', style: TextStyle(color: Colors.white, fontSize: 13)),
                                               ],
                                             )
-                                          : Column(
-                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.only(bottom: 4),
-                                                  child: Text(msg['content']!, style: TextStyle(color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87), fontSize: 14)),
-                                                ),
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
+                                          : type == 'image'
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  child: Image.file(
+                                                    File(msg['content']),
+                                                    width: 180,
+                                                    height: 180,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
                                                   children: [
-                                                    Text(msg['time']!, style: TextStyle(fontSize: 10, color: isMe ? Colors.white54 : Colors.grey)),
-                                                    const SizedBox(width: 4),
-                                                    Icon(Icons.done_all_rounded, color: isMe ? (isDark ? const Color(0xFFC79FFF) : Colors.white70) : Colors.blue, size: 12),
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(bottom: 4),
+                                                      child: Text(msg['content']!, style: TextStyle(color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87), fontSize: 14)),
+                                                    ),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(msg['time']!, style: TextStyle(fontSize: 10, color: isMe ? Colors.white54 : Colors.grey)),
+                                                        const SizedBox(width: 4),
+                                                        Icon(Icons.done_all_rounded, color: isMe ? (isDark ? const Color(0xFFC79FFF) : Colors.white70) : Colors.blue, size: 12),
+                                                      ],
+                                                    ),
                                                   ],
                                                 ),
-                                              ],
-                                            ),
                                     ),
                                   );
                                 },
@@ -1260,189 +1320,209 @@ jobs:
                             ),
 
                             SafeArea(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF161022) : Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.blue.shade200),
-                                  ),
-                                  child: _isRecordingActive
-                                      ? Container(
-                                          height: 44,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                          decoration: BoxDecoration(
-                                            color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue),
-                                            borderRadius: BorderRadius.circular(22),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Text(
-                                                '0:04',
-                                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  if (_isRecordingActive)
+                                    Positioned(
+                                      right: 16,
+                                      top: _isLocked ? -55 : -40 + (_currentDragY.clamp(-40.0, 0.0)),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 100),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF221A30) : Colors.white),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, -2))
+                                          ],
+                                          border: Border.all(color: _isLocked ? Colors.white : (isDark ? const Color(0xFF6F35B4) : Colors.blue), width: 1.5),
+                                        ),
+                                        child: Icon(
+                                          _isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                                          color: _isLocked ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF161022) : Colors.white,
+                                        borderRadius: BorderRadius.circular(24),
+                                        border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.blue.shade200),
+                                      ),
+                                      child: _isRecordingActive
+                                          ? Container(
+                                              height: 42,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue),
+                                                borderRadius: BorderRadius.circular(21),
                                               ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                  children: [
-                                                    _buildExactBar(12), _buildExactBar(22), _buildExactBar(32), _buildExactBar(18),
-                                                    _buildExactBar(10), _buildExactBar(26), _buildExactBar(34), _buildExactBar(20),
-                                                    _buildExactBar(12), _buildExactBar(24), _buildExactBar(30), _buildExactBar(14),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              GestureDetector(
-                                                onTap: _cancelRecording,
-                                                child: Container(
-                                                  width: 32,
-                                                  height: 32,
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.white,
-                                                    shape: BoxShape.circle,
+                                              child: Row(
+                                                children: [
+                                                  const Text(
+                                                    'جاري التسجيل...',
+                                                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                                   ),
-                                                  child: Icon(Icons.delete_outline_rounded, color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue), size: 18),
-                                                ),
-                                              ),
-                                              if (_isLocked) ...[
-                                                const SizedBox(width: 6),
-                                                GestureDetector(
-                                                  onTap: _sendRecordedVoice,
-                                                  child: Container(
-                                                    width: 32,
-                                                    height: 32,
-                                                    decoration: const BoxDecoration(
-                                                      color: Colors.white,
-                                                      shape: BoxShape.circle,
+                                                  const Spacer(),
+                                                  GestureDetector(
+                                                    onTap: _cancelRecording,
+                                                    child: Container(
+                                                      width: 30,
+                                                      height: 30,
+                                                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                                      child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade700, size: 16),
                                                     ),
-                                                    child: Icon(Icons.send_rounded, color: Colors.red.shade700, size: 18),
                                                   ),
+                                                  if (_isLocked) ...[
+                                                    const SizedBox(width: 8),
+                                                    GestureDetector(
+                                                      onTap: () async {
+                                                        final path = await _audioRecorder.stop();
+                                                        setState(() {
+                                                          _isRecordingActive = false;
+                                                          _isLocked = false;
+                                                          if (path != null) {
+                                                            _messages.add({'type': 'voice', 'content': path, 'time': '8:35 م', 'isMe': 'true'});
+                                                          }
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                                        child: Icon(Icons.send_rounded, color: Colors.red.shade700, size: 16),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            )
+                                          : Row(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    if (isTyping) return const SizedBox.shrink();
+                                                    return SizedBox(
+                                                      width: 38,
+                                                      height: 38,
+                                                      child: IconButton(
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(),
+                                                        icon: CustomPaint(
+                                                          size: const Size(20, 20),
+                                                          painter: StickerIconPainter(isDark: isDark),
+                                                        ),
+                                                        onPressed: () {},
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                    child: TextField(
+                                                      controller: _textController,
+                                                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+                                                      maxLines: 4,
+                                                      minLines: 1,
+                                                      decoration: InputDecoration(
+                                                        hintText: 'اكتب رسالتك...',
+                                                        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                                                        border: InputBorder.none,
+                                                        isDense: true,
+                                                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    if (isTyping) return const SizedBox.shrink();
+                                                    return SizedBox(
+                                                      width: 38,
+                                                      height: 38,
+                                                      child: IconButton(
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(),
+                                                        icon: Icon(Icons.attach_file_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 20),
+                                                        onPressed: () => _showAttachmentMenu(isDark),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    return AnimatedSwitcher(
+                                                      duration: const Duration(milliseconds: 250),
+                                                      child: isTyping
+                                                          ? Padding(
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: GestureDetector(
+                                                                onTap: _sendMessage,
+                                                                child: Container(
+                                                                  width: 38,
+                                                                  height: 38,
+                                                                  decoration: BoxDecoration(
+                                                                    color: isDark ? const Color(0xFF8B5CF6) : Colors.blue,
+                                                                    borderRadius: BorderRadius.circular(19),
+                                                                  ),
+                                                                  child: Center(
+                                                                    child: Transform.rotate(
+                                                                      angle: -0.25,
+                                                                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 17),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            )
+                                                          : Padding(
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: GestureDetector(
+                                                                onPanStart: (_) => _startRecording(),
+                                                                onPanUpdate: (details) => _updateRecording(details),
+                                                                onPanEnd: (_) => _endRecording(),
+                                                                child: Container(
+                                                                  width: 38,
+                                                                  height: 38,
+                                                                  decoration: BoxDecoration(
+                                                                    shape: BoxShape.circle,
+                                                                    gradient: isDark
+                                                                        ? const LinearGradient(
+                                                                            colors: [Color(0xFF8A49DF), Color(0xFF4A1E85)],
+                                                                            begin: Alignment.topLeft,
+                                                                            end: Alignment.bottomRight,
+                                                                          )
+                                                                        : null,
+                                                                    color: isDark ? null : Colors.blue,
+                                                                  ),
+                                                                  child: const Center(
+                                                                    child: Icon(
+                                                                      Icons.mic_rounded,
+                                                                      color: Colors.white,
+                                                                      size: 17,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                    );
+                                                  },
                                                 ),
                                               ],
-                                            ],
-                                          ),
-                                        )
-                                      : Row(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            ValueListenableBuilder<bool>(
-                                              valueListenable: _isTypingNotifier,
-                                              builder: (context, isTyping, child) {
-                                                if (isTyping) return const SizedBox.shrink();
-                                                return SizedBox(
-                                                  width: 40,
-                                                  height: 40,
-                                                  child: IconButton(
-                                                    padding: EdgeInsets.zero,
-                                                    constraints: const BoxConstraints(),
-                                                    icon: CustomPaint(
-                                                      size: const Size(21, 21),
-                                                      painter: StickerIconPainter(isDark: isDark),
-                                                    ),
-                                                    onPressed: () {},
-                                                  ),
-                                                );
-                                              },
                                             ),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                child: TextField(
-                                                  controller: _textController,
-                                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13.5),
-                                                  maxLines: 4,
-                                                  minLines: 1,
-                                                  decoration: InputDecoration(
-                                                    hintText: 'اكتب رسالتك...',
-                                                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13.5),
-                                                    border: InputBorder.none,
-                                                    isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            ValueListenableBuilder<bool>(
-                                              valueListenable: _isTypingNotifier,
-                                              builder: (context, isTyping, child) {
-                                                if (isTyping) return const SizedBox.shrink();
-                                                return SizedBox(
-                                                  width: 40,
-                                                  height: 40,
-                                                  child: IconButton(
-                                                    padding: EdgeInsets.zero,
-                                                    constraints: const BoxConstraints(),
-                                                    icon: Icon(Icons.attach_file_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 21),
-                                                    onPressed: () => _showAttachmentMenu(isDark),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            ValueListenableBuilder<bool>(
-                                              valueListenable: _isTypingNotifier,
-                                              builder: (context, isTyping, child) {
-                                                return AnimatedSwitcher(
-                                                  duration: const Duration(milliseconds: 250),
-                                                  child: isTyping
-                                                      ? Padding(
-                                                          padding: const EdgeInsets.all(2),
-                                                          child: GestureDetector(
-                                                            onTap: _sendMessage,
-                                                            child: Container(
-                                                              width: 40,
-                                                              height: 40,
-                                                              decoration: BoxDecoration(
-                                                                color: isDark ? const Color(0xFF8B5CF6) : Colors.blue,
-                                                                borderRadius: BorderRadius.circular(20),
-                                                              ),
-                                                              child: Center(
-                                                                child: Transform.rotate(
-                                                                  angle: -0.25,
-                                                                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        )
-                                                      : Padding(
-                                                          padding: const EdgeInsets.all(2),
-                                                          child: GestureDetector(
-                                                            onTapDown: (_) => _startRecording(),
-                                                            onTapUp: (_) => _endRecording(),
-                                                            onVerticalDragUpdate: (details) => _updateRecordingDrag(details.localPosition.dy),
-                                                            child: Container(
-                                                              width: 40,
-                                                              height: 40,
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                gradient: isDark
-                                                                    ? const LinearGradient(
-                                                                        colors: [Color(0xFF8A49DF), Color(0xFF4A1E85)],
-                                                                        begin: Alignment.topLeft,
-                                                                        end: Alignment.bottomRight,
-                                                                      )
-                                                                    : null,
-                                                                color: isDark ? null : Colors.blue,
-                                                              ),
-                                                              child: const Center(
-                                                                child: Icon(
-                                                                  Icons.mic_rounded,
-                                                                  color: Colors.white,
-                                                                  size: 18,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -1451,29 +1531,6 @@ jobs:
                     ),
                   );
                 },
-              );
-            }
-
-            Widget _buildExactBar(double height) {
-              return Container(
-                width: 2.5,
-                height: height,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              );
-            }
-
-            Widget _buildAudioBar(double height, bool isMe, bool isDark) {
-              return Container(
-                width: 2,
-                height: height,
-                margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                decoration: BoxDecoration(
-                  color: isMe ? (isDark ? const Color(0xFFEADBFF) : Colors.white70) : (isDark ? const Color(0xFFEADBFF) : Colors.blue),
-                  borderRadius: BorderRadius.circular(2),
-                ),
               );
             }
           }
@@ -1498,12 +1555,12 @@ jobs:
               ));
               canvas.drawPath(path, paint);
 
-              final dotPaint = Paint()
+              final fillDot = Paint()
                 ..color = isDark ? const Color(0xFFC79FFF) : Colors.blue
                 ..style = PaintingStyle.fill;
 
-              canvas.drawCircle(Offset(size.width * 0.38, size.height * 0.38), 1.5, dotPaint);
-              canvas.drawCircle(Offset(size.width * 0.62, size.height * 0.38), 1.5, dotPaint);
+              canvas.drawCircle(Offset(size.width * 0.38, size.height * 0.38), 1.5, fillDot);
+              canvas.drawCircle(Offset(size.width * 0.62, size.height * 0.38), 1.5, fillDot);
 
               final smilePath = Path();
               smilePath.moveTo(size.width * 0.35, size.height * 0.52);
