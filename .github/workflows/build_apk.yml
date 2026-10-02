@@ -963,6 +963,8 @@ jobs:
             final List<Map<String, dynamic>> _messages = [];
 
             bool _isRecordingActive = false;
+            bool _isLocked = false;
+            double _dragOffset = 0.0;
 
             @override
             void initState() {
@@ -1050,27 +1052,54 @@ jobs:
               });
             }
 
-            void _startRecordingSafe() {
+            void _startRecording() {
               setState(() {
                 _isRecordingActive = true;
+                _isLocked = false;
+                _dragOffset = 0.0;
               });
             }
 
-            void _stopRecordingSafe({bool save = true}) {
+            void _updateRecordingDrag(double verticalDrag) {
+              if (!_isRecordingActive) return;
+              setState(() {
+                _dragOffset = verticalDrag;
+                if (_dragOffset < -45) {
+                  _isLocked = true;
+                }
+              });
+            }
+
+            void _endRecording() {
+              if (!_isRecordingActive) return;
+              if (_isLocked) {
+                // If locked, don't auto send on release, wait for user manual action
+                return;
+              }
+              // Normal release: auto send voice message
+              _sendRecordedVoice();
+            }
+
+            void _sendRecordedVoice() {
               setState(() {
                 _isRecordingActive = false;
-              });
-
-              if (save) {
-                setState(() {
-                  _messages.add({
-                    'type': 'voice',
-                    'content': '🎤 تسجيل صوتي (مرسل)',
-                    'time': '8:35 م',
-                    'isMe': 'true'
-                  });
+                _isLocked = false;
+                _dragOffset = 0.0;
+                _messages.add({
+                  'type': 'voice',
+                  'content': '🎤 تسجيل صوتي • 0:05',
+                  'time': '8:35 م',
+                  'isMe': 'true'
                 });
-              }
+              });
+            }
+
+            void _cancelRecording() {
+              setState(() {
+                _isRecordingActive = false;
+                _isLocked = false;
+                _dragOffset = 0.0;
+              });
             }
 
             @override
@@ -1201,7 +1230,7 @@ jobs:
                                                 Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                   children: [
-                                                    Text(msg['content']!, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                                                    const Text('0:05', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                                                     Text(msg['time']!, style: TextStyle(fontSize: 10, color: isMe ? Colors.white54 : Colors.grey)),
                                                   ],
                                                 ),
@@ -1234,7 +1263,7 @@ jobs:
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF161022) : Colors.white,
                                     borderRadius: BorderRadius.circular(24),
@@ -1242,19 +1271,19 @@ jobs:
                                   ),
                                   child: _isRecordingActive
                                       ? Container(
-                                          height: 46,
+                                          height: 44,
                                           padding: const EdgeInsets.symmetric(horizontal: 12),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF6D56E8) : Colors.blue,
-                                            borderRadius: BorderRadius.circular(23),
+                                            color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue),
+                                            borderRadius: BorderRadius.circular(22),
                                           ),
                                           child: Row(
                                             children: [
                                               const Text(
-                                                '٠٠:٠٤',
+                                                '0:04',
                                                 style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                                               ),
-                                              const SizedBox(width: 10),
+                                              const SizedBox(width: 8),
                                               Expanded(
                                                 child: Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1265,32 +1294,34 @@ jobs:
                                                   ],
                                                 ),
                                               ),
-                                              const SizedBox(width: 10),
+                                              const SizedBox(width: 8),
                                               GestureDetector(
-                                                onTap: () => _stopRecordingSafe(save: false),
+                                                onTap: _cancelRecording,
                                                 child: Container(
-                                                  width: 34,
-                                                  height: 34,
+                                                  width: 32,
+                                                  height: 32,
                                                   decoration: const BoxDecoration(
                                                     color: Colors.white,
                                                     shape: BoxShape.circle,
                                                   ),
-                                                  child: Icon(Icons.delete_outline_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
+                                                  child: Icon(Icons.delete_outline_rounded, color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue), size: 18),
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
-                                              GestureDetector(
-                                                onTap: () => _stopRecordingSafe(save: true),
-                                                child: Container(
-                                                  width: 34,
-                                                  height: 34,
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.white,
-                                                    shape: BoxShape.circle,
+                                              if (_isLocked) ...[
+                                                const SizedBox(width: 6),
+                                                GestureDetector(
+                                                  onTap: _sendRecordedVoice,
+                                                  child: Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.white,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Icon(Icons.send_rounded, color: Colors.red.shade700, size: 18),
                                                   ),
-                                                  child: Icon(Icons.send_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
                                                 ),
-                                              ),
+                                              ],
                                             ],
                                           ),
                                         )
@@ -1302,13 +1333,13 @@ jobs:
                                               builder: (context, isTyping, child) {
                                                 if (isTyping) return const SizedBox.shrink();
                                                 return SizedBox(
-                                                  width: 42,
-                                                  height: 42,
+                                                  width: 40,
+                                                  height: 40,
                                                   child: IconButton(
                                                     padding: EdgeInsets.zero,
                                                     constraints: const BoxConstraints(),
                                                     icon: CustomPaint(
-                                                      size: const Size(23, 23),
+                                                      size: const Size(21, 21),
                                                       painter: StickerIconPainter(isDark: isDark),
                                                     ),
                                                     onPressed: () {},
@@ -1318,18 +1349,18 @@ jobs:
                                             ),
                                             Expanded(
                                               child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                                                 child: TextField(
                                                   controller: _textController,
-                                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
-                                                  maxLines: 5,
+                                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13.5),
+                                                  maxLines: 4,
                                                   minLines: 1,
                                                   decoration: InputDecoration(
                                                     hintText: 'اكتب رسالتك...',
-                                                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                                                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13.5),
                                                     border: InputBorder.none,
                                                     isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                                                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                                                   ),
                                                 ),
                                               ),
@@ -1339,12 +1370,12 @@ jobs:
                                               builder: (context, isTyping, child) {
                                                 if (isTyping) return const SizedBox.shrink();
                                                 return SizedBox(
-                                                  width: 42,
-                                                  height: 42,
+                                                  width: 40,
+                                                  height: 40,
                                                   child: IconButton(
                                                     padding: EdgeInsets.zero,
                                                     constraints: const BoxConstraints(),
-                                                    icon: Icon(Icons.attach_file_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 23),
+                                                    icon: Icon(Icons.attach_file_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 21),
                                                     onPressed: () => _showAttachmentMenu(isDark),
                                                   ),
                                                 );
@@ -1361,16 +1392,16 @@ jobs:
                                                           child: GestureDetector(
                                                             onTap: _sendMessage,
                                                             child: Container(
-                                                              width: 42,
-                                                              height: 42,
+                                                              width: 40,
+                                                              height: 40,
                                                               decoration: BoxDecoration(
                                                                 color: isDark ? const Color(0xFF8B5CF6) : Colors.blue,
-                                                                borderRadius: BorderRadius.circular(21),
+                                                                borderRadius: BorderRadius.circular(20),
                                                               ),
                                                               child: Center(
                                                                 child: Transform.rotate(
                                                                   angle: -0.25,
-                                                                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                                                                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
                                                                 ),
                                                               ),
                                                             ),
@@ -1379,10 +1410,12 @@ jobs:
                                                       : Padding(
                                                           padding: const EdgeInsets.all(2),
                                                           child: GestureDetector(
-                                                            onTap: _startRecordingSafe,
+                                                            onTapDown: (_) => _startRecording(),
+                                                            onTapUp: (_) => _endRecording(),
+                                                            onVerticalDragUpdate: (details) => _updateRecordingDrag(details.localPosition.dy),
                                                             child: Container(
-                                                              width: 42,
-                                                              height: 42,
+                                                              width: 40,
+                                                              height: 40,
                                                               decoration: BoxDecoration(
                                                                 shape: BoxShape.circle,
                                                                 gradient: isDark
@@ -1398,7 +1431,7 @@ jobs:
                                                                 child: Icon(
                                                                   Icons.mic_rounded,
                                                                   color: Colors.white,
-                                                                  size: 20,
+                                                                  size: 18,
                                                                 ),
                                                               ),
                                                             ),
