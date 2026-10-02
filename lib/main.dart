@@ -1000,13 +1000,24 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () async {
                     Navigator.pop(context);
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
+                    try {
+                      final picker = ImagePicker();
+                      final image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        setState(() {
+                          _messages.add({
+                            'type': 'text',
+                            'content': '📷 صورة: ${image.name}',
+                            'time': '8:30 م',
+                            'isMe': 'true'
+                          });
+                        });
+                      }
+                    } catch (e) {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '📷 صورة: ${image.name}',
+                          'content': '⚠️ تعذر الوصول إلى المعرض',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1015,13 +1026,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   }),
                   _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () async {
                     Navigator.pop(context);
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.camera);
-                    if (image != null) {
+                    try {
+                      final picker = ImagePicker();
+                      final image = await picker.pickImage(source: ImageSource.camera);
+                      if (image != null) {
+                        setState(() {
+                          _messages.add({
+                            'type': 'text',
+                            'content': '📸 صورة كاميرا: ${image.name}',
+                            'time': '8:30 م',
+                            'isMe': 'true'
+                          });
+                        });
+                      }
+                    } catch (e) {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '📸 صورة كاميرا: ${image.name}',
+                          'content': '⚠️ تعذر الوصول إلى الكاميرا',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1330,13 +1352,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                               )
                                             : Padding(
                                                 padding: const EdgeInsets.all(2),
-                                                child: GestureDetector(
-                                                  onLongPressStart: (_) {
+                                                child: Listener(
+                                                  onPointerDown: (_) {
                                                     setState(() {
                                                       _isRecordingActive = true;
                                                     });
                                                   },
-                                                  onLongPressEnd: (_) {
+                                                  onPointerUp: (_) {
                                                     setState(() {
                                                       _isRecordingActive = false;
                                                       _messages.add({
@@ -1425,7 +1447,7 @@ class StickerIconPainter extends CustomPainter {
       ..color = isDark ? const Color(0xFFC79FFF) : Colors.blue
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(size.width *0.38, size.height * 0.38), 1.5, dotPaint);
+    canvas.drawCircle(Offset(size.width * 0.38, size.height * 0.38), 1.5, dotPaint);
     canvas.drawCircle(Offset(size.width * 0.62, size.height * 0.38), 1.5, dotPaint);
 
     final smilePath = Path();
