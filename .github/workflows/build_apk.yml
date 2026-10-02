@@ -27,17 +27,21 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Disable R8 Shrink to Prevent Build Failure
-        run: |
-          PROP_FILE="android/gradle.properties"
-          echo "android.enableR8=false" >> "$PROP_FILE"
-
-      - name: Update minSdk to 23 for Plugins
+      - name: Configure build.gradle (minSdk 23 & Disable Shrink)
         run: |
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
+            
+            # تعطيل الـ shrinking و minify لمنع أخطاء الـ R8 نهائياً
+            sed -i '/buildTypes {/,/}/ {
+              /release {/ {
+                n
+                i\        minifyEnabled false\
+                i\        shrinkResources false
+              }
+            }' "$BUILD_FILE"
           fi
 
       - name: Inject Full Original Zajel App Code with Real Media & Voice Fixed
