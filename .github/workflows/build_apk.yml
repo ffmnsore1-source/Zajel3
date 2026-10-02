@@ -963,7 +963,6 @@ jobs:
             final List<Map<String, dynamic>> _messages = [];
 
             bool _isRecordingActive = false;
-            bool _isLocked = false;
 
             @override
             void initState() {
@@ -1054,14 +1053,12 @@ jobs:
             void _startRecordingSafe() {
               setState(() {
                 _isRecordingActive = true;
-                _isLocked = false;
               });
             }
 
             void _stopRecordingSafe({bool save = true}) {
               setState(() {
                 _isRecordingActive = false;
-                _isLocked = false;
               });
 
               if (save) {
@@ -1492,7 +1489,7 @@ jobs:
             }
 
             @override
-            bool shouldRepaint(covariant CustomParser oldDelegate) => false;
+            bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
           }
           EOF
 
