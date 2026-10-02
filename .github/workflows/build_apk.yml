@@ -14,28 +14,26 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'adopt'
           java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.x'
+          flutter-version: '3.19.x'
           channel: 'stable'
           cache: true
 
-      - name: Clean and Recreate Android Folder
+      - name: Clean Android and Get Dependencies
         run: |
           rm -rf android
           flutter create . --org com.zajel.app --project-name zajel --platforms=android
+          flutter pub get
 
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
+      - name: Build APK Release
         run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
