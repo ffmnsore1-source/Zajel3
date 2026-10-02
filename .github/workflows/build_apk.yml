@@ -1568,3 +1568,4 @@ jobs:
         with:
           name: zajel-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+  
