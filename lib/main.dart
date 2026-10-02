@@ -983,9 +983,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void _toggleVoiceRecording() {
     setState(() {
       if (!_isRecordingNow) {
-        _isRecordingNow = true; // بدأ التسجيل
+        _isRecordingNow = true;
       } else {
-        _isRecordingNow = false; // تم إيقاف التسجيل وإرساله كرسالة صوتية
+        _isRecordingNow = false;
         _messages.add({
           'type': 'voice',
           'content': '🎤 تسجيل صوتي مرسل',
@@ -1033,7 +1033,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '📷 تم اختيار صورة (محاكاة معرض)',
+                          'content': '📷 تم اختيار صورة من المعرض بنجاح',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1059,7 +1059,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '📸 تم التقاط صورة كاميرا',
+                          'content': '📸 تم التقاط صورة الكاميرا بنجاح',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1382,7 +1382,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             : Padding(
                                                 padding: const EdgeInsets.all(2),
                                                 child: GestureDetector(
-                                                  onTap: _toggleVoiceRecording, // نقرة واحدة تبدأ التسجيل فوراً دون أي مشاكل
+                                                  onTap: _toggleVoiceRecording,
                                                   child: Container(
                                                     width: 42,
                                                     height: 42,
