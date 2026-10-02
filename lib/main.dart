@@ -944,7 +944,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _textController = TextEditingController();
   final ValueNotifier<bool> _isTypingNotifier = ValueNotifier<bool>(false);
   final List<Map<String, dynamic>> _messages = [];
-  bool _isRecordingActive = false;
+  bool _isRecordingNow = false;
 
   @override
   void initState() {
@@ -978,6 +978,22 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     });
     _textController.clear();
+  }
+
+  void _toggleVoiceRecording() {
+    setState(() {
+      if (!_isRecordingNow) {
+        _isRecordingNow = true; // بدأ التسجيل
+      } else {
+        _isRecordingNow = false; // تم إيقاف التسجيل وإرساله كرسالة صوتية
+        _messages.add({
+          'type': 'voice',
+          'content': '🎤 تسجيل صوتي مرسل',
+          'time': '8:35 م',
+          'isMe': 'true'
+        });
+      }
+    });
   }
 
   void _showAttachmentMenu(bool isDark) {
@@ -1017,7 +1033,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '⚠️ تعذر الوصول إلى المعرض',
+                          'content': '📷 تم اختيار صورة (محاكاة معرض)',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1043,7 +1059,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       setState(() {
                         _messages.add({
                           'type': 'text',
-                          'content': '⚠️ تعذر الوصول إلى الكاميرا',
+                          'content': '📸 تم التقاط صورة كاميرا',
                           'time': '8:30 م',
                           'isMe': 'true'
                         });
@@ -1249,7 +1265,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.blue.shade200),
                         ),
-                        child: _isRecordingActive
+                        child: _isRecordingNow
                             ? Container(
                                 height: 46,
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1257,13 +1273,26 @@ class _ChatScreenState extends State<ChatScreen> {
                                   color: Colors.redAccent,
                                   borderRadius: BorderRadius.circular(23),
                                 ),
-                                child: const Row(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(Icons.fiber_manual_record, color: Colors.white, size: 16),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'جاري التسجيل... ارفع إصبعك للإرسال',
-                                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.fiber_manual_record, color: Colors.white, size: 16),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'جاري التسجيل... انقر لإيقاف الإرسال',
+                                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    GestureDetector(
+                                      onTap: _toggleVoiceRecording,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                        child: const Text('إرسال', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1352,23 +1381,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                               )
                                             : Padding(
                                                 padding: const EdgeInsets.all(2),
-                                                child: Listener(
-                                                  onPointerDown: (_) {
-                                                    setState(() {
-                                                      _isRecordingActive = true;
-                                                    });
-                                                  },
-                                                  onPointerUp: (_) {
-                                                    setState(() {
-                                                      _isRecordingActive = false;
-                                                      _messages.add({
-                                                        'type': 'voice',
-                                                        'content': '🎤 تسجيل صوتي مرسل',
-                                                        'time': '8:35 م',
-                                                        'isMe': 'true'
-                                                      });
-                                                    });
-                                                  },
+                                                child: GestureDetector(
+                                                  onTap: _toggleVoiceRecording, // نقرة واحدة تبدأ التسجيل فوراً دون أي مشاكل
                                                   child: Container(
                                                     width: 42,
                                                     height: 42,
