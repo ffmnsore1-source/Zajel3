@@ -24,6 +24,15 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Auto-Fix and Generate Android Scaffolding
+        run: |
+          # إذا كان مجلد الأندرويد غير موجود أو ناقص، سيقوم النظام بإنشائه كاملاً وسليماً 100% تلقائياً
+          if [ ! -f "android/app/src/main/AndroidManifest.xml" ]; then
+            echo "Android files missing or incomplete. Generating fresh Android structure..."
+            rm -rf android
+            flutter create . --org com.zajel.app --project-name zajel --platforms=android
+          fi
+
       - name: Install dependencies
         run: flutter pub get
 
