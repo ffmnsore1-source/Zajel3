@@ -27,6 +27,11 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
+      - name: Disable R8 Shrink to Prevent Build Failure
+        run: |
+          PROP_FILE="android/gradle.properties"
+          echo "android.enableR8=false" >> "$PROP_FILE"
+
       - name: Update minSdk to 23 for Plugins
         run: |
           BUILD_FILE="android/app/build.gradle"
@@ -1584,7 +1589,7 @@ jobs:
           EOF
 
       - name: Build APK
-        run: flutter build apk --release --no-shrink
+        run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
