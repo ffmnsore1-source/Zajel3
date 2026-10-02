@@ -34,7 +34,7 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الـ shrinking و minify لمنع أخطاء الـ R8 نهائياً
+            # تعطيل الـ shrinking والـ minify لمنع أخطاء الـ R8 نهائياً
             sed -i '/buildTypes {/,/}/ {
               /release {/ {
                 n
