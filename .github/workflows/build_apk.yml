@@ -1,4 +1,4 @@
-name: Build Flutter APK
+Name: Build Flutter APK
 
 on:
   push:
@@ -21,17 +21,417 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.x'
-          channel: 'stable'
           cache: true
 
-      - name: Install Dependencies
-        run: flutter pub get
+      - name: Create Clean Flutter Project
+        run: |
+          flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Build APK Debug
-        run: flutter build apk --debug
+      - name: Inject Zajel App Code with Fixed Gallery & Voice
+        run: |
+          cat << 'EOF' > pubspec.yaml
+          name: zajel
+          description: A new Flutter project.
+          publish_to: 'none'
+          version: 1.0.0+1
+
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+
+          dependencies:
+            flutter:
+              sdk: flutter
+            image_picker: ^1.0.4
+
+          dev_dependencies:
+            flutter_test:
+              sdk: flutter
+            flutter_lints: ^2.0.0
+
+          flutter:
+            uses-material-design: true
+          EOF
+
+          cat << 'EOF' > lib/main.dart
+          import 'package:flutter/material.dart';
+          import 'package:image_picker/image_picker.dart';
+
+          void main() {
+            runApp(const ZajelApp());
+          }
+
+          Route<T> _smoothRoute<T>(Widget page) {
+            return PageRouteBuilder<T>(
+              pageBuilder: (context, animation, secondaryAnimation) => page,
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const begin = Offset(0.08, 0.0);
+                const end = Offset.zero;
+                const curve = Curves.fastOutSlowIn;
+                var slideTween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                var fadeTween = Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: const Interval(0.0, 0.7, curve: Curves.easeOut)));
+                return FadeTransition(
+                  opacity: animation.drive(fadeTween),
+                  child: SlideTransition(
+                    position: animation.drive(slideTween),
+                    child: child,
+                  ),
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 240),
+              reverseTransitionDuration: const Duration(milliseconds: 200),
+            );
+          }
+
+          class ThemeNotifier extends ValueNotifier<bool> {
+            ThemeNotifier() : super(true);
+            void toggleTheme(bool isDark) {
+              value = isDark;
+            }
+          }
+
+          final themeNotifier = ThemeNotifier();
+
+          class ZajelApp extends StatelessWidget {
+            const ZajelApp({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: themeNotifier,
+                builder: (context, isDark, child) {
+                  return MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    title: 'زاجل - Zajel',
+                    theme: ThemeData(
+                      primarySwatch: Colors.deepPurple,
+                      scaffoldBackgroundColor: isDark ? const Color(0xFF0F0C15) : Colors.white,
+                      useMaterial3: true,
+                    ),
+                    home: const LoginScreen(),
+                  );
+                },
+              );
+            }
+          }
+
+          class LoginScreen extends StatefulWidget {
+            const LoginScreen({super.key});
+
+            @override
+            State<LoginScreen> createState() => _LoginScreenState();
+          }
+
+          class _LoginScreenState extends State<LoginScreen> {
+            final _phoneController = TextEditingController();
+
+            void _sendCode() {
+              Navigator.push(
+                context,
+                _smoothRoute(OtpVerificationScreen(phoneNumber: _phoneController.text)),
+              );
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: themeNotifier,
+                builder: (context, isDark, child) {
+                  return Scaffold(
+                    backgroundColor: isDark ? const Color(0xFF0F0C15) : Colors.white,
+                    body: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(22),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF221A30) : Colors.blue.shade50,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Text('🕊️', style: TextStyle(fontSize: 48)),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'زاجل | Zajel',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? const Color(0xFFEADBFF) : Colors.blue.shade900,
+                                ),
+                              ),
+                              const SizedBox(height: 48),
+                              TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                                decoration: InputDecoration(
+                                  labelText: 'رقم الهاتف',
+                                  labelStyle: TextStyle(color: isDark ? const Color(0xFFC79FFF) : Colors.blue.shade700),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                ),
+                              ),
+                              const SizedBox(height: 36),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  onPressed: _sendCode,
+                                  child: const Text('إرسال رمز التحقق', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }
+          }
+
+          class OtpVerificationScreen extends StatefulWidget {
+            final String phoneNumber;
+            const OtpVerificationScreen({super.key, required this.phoneNumber});
+
+            @override
+            State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+          }
+
+          class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+            final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+
+            void _verifyAndProceed() {
+              Navigator.pushAndRemoveUntil(
+                context,
+                _smoothRoute(const ChatListScreen()),
+                (route) => false,
+              );
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('رمز التحقق')),
+                body: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('أدخل رمز التحقق', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 36),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(6, (index) {
+                          return Container(
+                            width: 45,
+                            height: 52,
+                            decoration: BoxDecoration(border: Border.all(color: Colors.blue), borderRadius: BorderRadius.circular(14)),
+                            child: TextField(
+                              controller: _controllers[index],
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              maxLength: 1,
+                              decoration: const InputDecoration(counterText: '', border: InputBorder.none),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 40),
+                      ElevatedButton(
+                        onPressed: _verifyAndProceed,
+                        child: const Text('تأكيد والانتقال'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+          }
+
+          class ChatListScreen extends StatelessWidget {
+            const ChatListScreen({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('المحادثات | Zajel')),
+                body: ListView(
+                  children: [
+                    ListTile(
+                      leading: const CircleAvatar(child: Text('أ')),
+                      title: const Text('أحمد علي'),
+                      subtitle: const Text('مرحباً بك في تطبيق زاجل 🕊'),
+                      onTap: () {
+                        Navigator.push(context, _smoothRoute(const ChatScreen(userName: 'أحمد علي')));
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class ChatScreen extends StatefulWidget {
+            final String userName;
+            const ChatScreen({super.key, required this.userName});
+
+            @override
+            State<ChatScreen> createState() => _ChatScreenState();
+          }
+
+          class _ChatScreenState extends State<ChatScreen> {
+            final _textController = TextEditingController();
+            final List<Map<String, dynamic>> _messages = [];
+            final ImagePicker _picker = ImagePicker();
+
+            @override
+            void initState() {
+              super.initState();
+              _messages.add({
+                'type': 'text',
+                'content': 'أهلاً بك! معك ${widget.userName} 🕊',
+                'time': '8:28 م',
+                'isMe': 'false'
+              });
+            }
+
+            @override
+            void dispose() {
+              _textController.dispose();
+              super.dispose();
+            }
+
+            void _sendMessage() {
+              if (_textController.text.trim().isEmpty) return;
+              setState(() {
+                _messages.add({'type': 'text', 'content': _textController.text, 'time': '8:29 م', 'isMe': 'true'});
+              });
+              _textController.clear();
+            }
+
+            Future<void> _pickImage(ImageSource source) async {
+              try {
+                final XFile? image = await _picker.pickImage(source: source);
+                if (image != null) {
+                  setState(() {
+                    _messages.add({'type': 'text', 'content': '📷 صورة مرسلة (${image.name})', 'time': '8:30 م', 'isMe': 'true'});
+                  });
+                }
+              } catch (e) {
+                // تجنب أي خطأ
+              }
+            }
+
+            void _sendVoiceNote() {
+              setState(() {
+                _messages.add({'type': 'text', 'content': '🎤 تسجيل صوتي مرسل', 'time': '8:31 م', 'isMe': 'true'});
+              });
+            }
+
+            void _showAttachmentMenu(bool isDark) {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.image_rounded, size: 32, color: Colors.blue),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _pickImage(ImageSource.gallery);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.camera_alt_rounded, size: 32, color: Colors.green),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _pickImage(ImageSource.camera);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: Text(widget.userName)),
+                body: Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = _messages[index];
+                          final isMe = msg['isMe'] == 'true';
+                          return Align(
+                            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isMe ? Colors.blue : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(msg['content']!, style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.attach_file, color: Colors.blue),
+                            onPressed: () => _showAttachmentMenu(false),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: _textController,
+                              decoration: const InputDecoration(hintText: 'اكتب رسالتك...', border: InputBorder.none),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.send, color: Colors.blue),
+                            onPressed: _sendMessage,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.mic, color: Colors.purple),
+                            onPressed: _sendVoiceNote,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+          EOF
+
+      - name: Install Dependencies & Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: zajel-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
