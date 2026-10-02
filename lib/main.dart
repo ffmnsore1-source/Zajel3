@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const ZajelApp());
@@ -326,8 +327,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildOptionItem(icon: Icons.photo_library_rounded, color: const Color(0xFFC79FFF), title: 'المعرض', onTap: () { Navigator.pop(context); }),
-                  _buildOptionItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة كاميرا جديدة'); }),
+                  _buildOptionItem(icon: Icons.photo_library_rounded, color: const Color(0xFFC79FFF), title: 'المعرض', onTap: () async {
+                    Navigator.pop(context);
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() => _profileStatus = 'صورة: ${image.name}');
+                    }
+                  }),
+                  _buildOptionItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () async {
+                    Navigator.pop(context);
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.camera);
+                    if (image != null) {
+                      setState(() => _profileStatus = 'صورة كاميرا');
+                    }
+                  }),
                   _buildOptionItem(icon: Icons.delete_outline_rounded, color: Colors.redAccent, title: 'حذف', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'افتراضي'); }),
                 ],
               ),
@@ -929,12 +944,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _textController = TextEditingController();
   final ValueNotifier<bool> _isTypingNotifier = ValueNotifier<bool>(false);
   final List<Map<String, dynamic>> _messages = [];
-
   bool _isRecordingActive = false;
-  bool _isLocked = false;
-  double _dragOffsetY = 0.0;
-  double _currentFingerX = 24.0;
-  double _currentFingerY = 90.0;
 
   @override
   void initState() {
@@ -988,8 +998,36 @@ class _ChatScreenState extends State<ChatScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () { Navigator.pop(context); _addAttachmentMessage('📷 صورة مرفقة'); }),
-                  _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); _addAttachmentMessage('📸 صورة كاميرا'); }),
+                  _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () async {
+                    Navigator.pop(context);
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() {
+                        _messages.add({
+                          'type': 'text',
+                          'content': '📷 صورة: ${image.name}',
+                          'time': '8:30 م',
+                          'isMe': 'true'
+                        });
+                      });
+                    }
+                  }),
+                  _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () async {
+                    Navigator.pop(context);
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.camera);
+                    if (image != null) {
+                      setState(() {
+                        _messages.add({
+                          'type': 'text',
+                          'content': '📸 صورة كاميرا: ${image.name}',
+                          'time': '8:30 م',
+                          'isMe': 'true'
+                        });
+                      });
+                    }
+                  }),
                   _buildAttachmentItem(icon: Icons.person_rounded, color: Colors.orangeAccent, title: 'جهة اتصال', onTap: () { Navigator.pop(context); _addAttachmentMessage('👤 جهة اتصال'); }),
                   _buildAttachmentItem(icon: Icons.insert_drive_file_rounded, color: Colors.blueAccent, title: 'مستند', onTap: () { Navigator.pop(context); _addAttachmentMessage('📄 ملف مستند'); }),
                 ],
@@ -1020,35 +1058,6 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add({'type': 'text', 'content': content, 'time': '8:30 م', 'isMe': 'true'});
     });
-  }
-
-  void _startAudioSimulation(Offset globalPosition) {
-    setState(() {
-      _isRecordingActive = true;
-      _isLocked = false;
-      _dragOffsetY = 0.0;
-      _currentFingerX = 24.0;
-      _currentFingerY = 90.0;
-    });
-  }
-
-  void _stopAudioSimulation({bool save = true}) {
-    setState(() {
-      _isRecordingActive = false;
-      _isLocked = false;
-      _dragOffsetY = 0.0;
-    });
-
-    if (save) {
-      setState(() {
-        _messages.add({
-          'type': 'voice',
-          'content': '🎤 تسجيل صوتي (محاكي)',
-          'time': '8:35 م',
-          'isMe': 'true'
-        });
-      });
-    }
   }
 
   @override
@@ -1208,40 +1217,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
 
-                  if (_isRecordingActive && !_isLocked)
-                    Positioned(
-                      left: _currentFingerX,
-                      bottom: _currentFingerY,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: (_dragOffsetY < -40) ? Colors.redAccent : (isDark ? const Color(0xFF221A30) : Colors.white),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 5)),
-                          ],
-                          border: Border.all(
-                            color: (_dragOffsetY < -40) ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
-                            width: 2,
-                          ),
-                        ),
-                        child: Icon(
-                          (_dragOffsetY < -40) ? Icons.lock_rounded : Icons.lock_open_rounded,
-                          color: (_dragOffsetY < -40) ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
-                          size: 22,
-                        ),
-                      ),
-                    ),
-
-                  if (_isRecordingActive && !_isLocked)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        'قم بالتمرير لليسار للإلغاء أو للأعلى للقفل 🔒',
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                      ),
-                    ),
-
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1257,54 +1232,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                 height: 46,
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF6D56E8) : Colors.blue,
+                                  color: Colors.redAccent,
                                   borderRadius: BorderRadius.circular(23),
                                 ),
-                                child: Row(
+                                child: const Row(
                                   children: [
-                                    const Text(
-                                      '٠٠:٠٤',
+                                    Icon(Icons.fiber_manual_record, color: Colors.white, size: 16),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'جاري التسجيل... ارفع إصبعك للإرسال',
                                       style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          _buildExactBar(12), _buildExactBar(22), _buildExactBar(32), _buildExactBar(18),
-                                          _buildExactBar(10), _buildExactBar(26), _buildExactBar(34), _buildExactBar(20),
-                                          _buildExactBar(12), _buildExactBar(24), _buildExactBar(30), _buildExactBar(14),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    GestureDetector(
-                                      onTap: () => _stopAudioSimulation(save: false),
-                                      child: Container(
-                                        width: 34,
-                                        height: 34,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(Icons.delete_outline_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
-                                      ),
-                                    ),
-                                    if (_isLocked) ...[
-                                      const SizedBox(width: 6),
-                                      GestureDetector(
-                                        onTap: () => _stopAudioSimulation(save: true),
-                                        child: Container(
-                                          width: 34,
-                                          height: 34,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(Icons.send_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
-                                        ),
-                                      ),
-                                    ],
                                   ],
                                 ),
                               )
@@ -1393,27 +1331,21 @@ class _ChatScreenState extends State<ChatScreen> {
                                             : Padding(
                                                 padding: const EdgeInsets.all(2),
                                                 child: GestureDetector(
-                                                  onPanStart: (details) {
-                                                    _startAudioSimulation(details.globalPosition);
+                                                  onLongPressStart: (_) {
+                                                    setState(() {
+                                                      _isRecordingActive = true;
+                                                    });
                                                   },
-                                                  onPanUpdate: (details) {
-                                                    if (_isRecordingActive && !_isLocked) {
-                                                      setState(() {
-                                                        _dragOffsetY += details.delta.dy;
-                                                        _currentFingerX += details.delta.dx;
-                                                        _currentFingerY -= details.delta.dy;
-                                                        if (_dragOffsetY < -40) {
-                                                          _isLocked = true;
-                                                        }
+                                                  onLongPressEnd: (_) {
+                                                    setState(() {
+                                                      _isRecordingActive = false;
+                                                      _messages.add({
+                                                        'type': 'voice',
+                                                        'content': '🎤 تسجيل صوتي مرسل',
+                                                        'time': '8:35 م',
+                                                        'isMe': 'true'
                                                       });
-                                                    }
-                                                  },
-                                                  onPanEnd: (_) {
-                                                    if (_isRecordingActive) {
-                                                      if (!_isLocked) {
-                                                        _stopAudioSimulation(save: true);
-                                                      }
-                                                    }
+                                                    });
                                                   },
                                                   child: Container(
                                                     width: 42,
@@ -1456,17 +1388,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildExactBar(double height) {
-    return Container(
-      width: 2.5,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
   Widget _buildAudioBar(double height, bool isMe, bool isDark) {
     return Container(
       width: 2,
@@ -1504,7 +1425,7 @@ class StickerIconPainter extends CustomPainter {
       ..color = isDark ? const Color(0xFFC79FFF) : Colors.blue
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(size.width * 0.38, size.height * 0.38), 1.5, dotPaint);
+    canvas.drawCircle(Offset(size.width *0.38, size.height * 0.38), 1.5, dotPaint);
     canvas.drawCircle(Offset(size.width * 0.62, size.height * 0.38), 1.5, dotPaint);
 
     final smilePath = Path();
