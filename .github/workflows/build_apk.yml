@@ -27,7 +27,7 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Inject Complete Original Zajel App Code
+      - name: Inject Full Original Zajel App Code Fixed
         run: |
           cat << 'EOF' > lib/main.dart
           import 'package:flutter/material.dart';
@@ -964,9 +964,6 @@ jobs:
 
             bool _isRecordingActive = false;
             bool _isLocked = false;
-            double _dragOffsetY = 0.0;
-            double _currentFingerX = 24.0;
-            double _currentFingerY = 90.0;
 
             @override
             void initState() {
@@ -1054,28 +1051,24 @@ jobs:
               });
             }
 
-            void _startAudioSimulation(Offset globalPosition) {
+            void _startRecordingSafe() {
               setState(() {
                 _isRecordingActive = true;
                 _isLocked = false;
-                _dragOffsetY = 0.0;
-                _currentFingerX = 24.0;
-                _currentFingerY = 90.0;
               });
             }
 
-            void _stopAudioSimulation({bool save = true}) {
+            void _stopRecordingSafe({bool save = true}) {
               setState(() {
                 _isRecordingActive = false;
                 _isLocked = false;
-                _dragOffsetY = 0.0;
               });
 
               if (save) {
                 setState(() {
                   _messages.add({
                     'type': 'voice',
-                    'content': '🎤 تسجيل صوتي (محاكي)',
+                    'content': '🎤 تسجيل صوتي (مرسل)',
                     'time': '8:35 م',
                     'isMe': 'true'
                   });
@@ -1240,40 +1233,6 @@ jobs:
                               ),
                             ),
 
-                            if (_isRecordingActive && !_isLocked)
-                              Positioned(
-                                left: _currentFingerX,
-                                bottom: _currentFingerY,
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: (_dragOffsetY < -40) ? Colors.redAccent : (isDark ? const Color(0xFF221A30) : Colors.white),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 5)),
-                                    ],
-                                    border: Border.all(
-                                      color: (_dragOffsetY < -40) ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    (_dragOffsetY < -40) ? Icons.lock_rounded : Icons.lock_open_rounded,
-                                    color: (_dragOffsetY < -40) ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
-                                    size: 22,
-                                  ),
-                                ),
-                              ),
-
-                            if (_isRecordingActive && !_isLocked)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Text(
-                                  'قم بالتمرير لليسار للإلغاء أو للأعلى للقفل 🔒',
-                                  style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                                ),
-                              ),
-
                             SafeArea(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1311,7 +1270,7 @@ jobs:
                                               ),
                                               const SizedBox(width: 10),
                                               GestureDetector(
-                                                onTap: () => _stopAudioSimulation(save: false),
+                                                onTap: () => _stopRecordingSafe(save: false),
                                                 child: Container(
                                                   width: 34,
                                                   height: 34,
@@ -1322,21 +1281,19 @@ jobs:
                                                   child: Icon(Icons.delete_outline_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
                                                 ),
                                               ),
-                                              if (_isLocked) ...[
-                                                const SizedBox(width: 6),
-                                                GestureDetector(
-                                                  onTap: () => _stopAudioSimulation(save: true),
-                                                  child: Container(
-                                                    width: 34,
-                                                    height: 34,
-                                                    decoration: const BoxDecoration(
-                                                      color: Colors.white,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: Icon(Icons.send_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
+                                              const SizedBox(width: 6),
+                                              GestureDetector(
+                                                onTap: () => _stopRecordingSafe(save: true),
+                                                child: Container(
+                                                  width: 34,
+                                                  height: 34,
+                                                  decoration: const BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
                                                   ),
+                                                  child: Icon(Icons.send_rounded, color: isDark ? const Color(0xFF6D56E8) : Colors.blue, size: 18),
                                                 ),
-                                              ],
+                                              ),
                                             ],
                                           ),
                                         )
@@ -1425,28 +1382,7 @@ jobs:
                                                       : Padding(
                                                           padding: const EdgeInsets.all(2),
                                                           child: GestureDetector(
-                                                            onPanStart: (details) {
-                                                              _startAudioSimulation(details.globalPosition);
-                                                            },
-                                                            onPanUpdate: (details) {
-                                                              if (_isRecordingActive && !_isLocked) {
-                                                                setState(() {
-                                                                  _dragOffsetY += details.delta.dy;
-                                                                  _currentFingerX += details.delta.dx;
-                                                                  _currentFingerY -= details.delta.dy;
-                                                                  if (_dragOffsetY < -40) {
-                                                                    _isLocked = true;
-                                                                  }
-                                                                });
-                                                              }
-                                                            },
-                                                            onPanEnd: (_) {
-                                                              if (_isRecordingActive) {
-                                                                if (!_isLocked) {
-                                                                  _stopAudioSimulation(save: true);
-                                                                }
-                                                              }
-                                                            },
+                                                            onTap: _startRecordingSafe,
                                                             child: Container(
                                                               width: 42,
                                                               height: 42,
@@ -1556,7 +1492,7 @@ jobs:
             }
 
             @override
-            bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+            bool shouldRepaint(covariant CustomParser oldDelegate) => false;
           }
           EOF
 
