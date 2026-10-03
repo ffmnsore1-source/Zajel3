@@ -27,7 +27,7 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android Properties and Gradle Setup
+      - name: Fix Android Properties, Sdk, and Kotlin Version Properly
         run: |
           PROP_FILE="android/gradle.properties"
           if [ -f "$PROP_FILE" ]; then
@@ -45,10 +45,41 @@ jobs:
             sed -i 's/minSdk =.*/minSdk = 23/g' "$BUILD_FILE"
           fi
 
-          # إضافة multiDex وإصدار كوتلن بشكل مباشر وسليم دون تعقيد بايثون
+          # تعديل جذر ملف build.gradle لإجبار استخدام كوتلن 1.9.0 المتوافقة مع أحدث الحزم
           ROOT_BUILD_FILE="android/build.gradle"
           if [ -f "$ROOT_BUILD_FILE" ]; then
-            echo "buildscript { ext.kotlin_version = '1.8.22' }" >> "$ROOT_BUILD_FILE"
+            cat << 'EOT' > "$ROOT_BUILD_FILE"
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.buildDir = '../build'
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+          subprojects {
+              project.evaluationDependsOn(':app')
+          }
+
+          tasks.register("clean", Delete) {
+              delete rootProject.buildDir
+          }
+
+          buildscript {
+              ext.kotlin_version = '1.9.0'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:7.4.2'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$ext.kotlin_version"
+              }
+          }
+          EOT
           fi
 
           APP_BUILD_FILE="android/app/build.gradle"
