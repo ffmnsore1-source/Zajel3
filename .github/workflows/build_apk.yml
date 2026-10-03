@@ -27,8 +27,19 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Configure Android SDK and Min SDK
+      - name: Fix Kotlin and Gradle Versions
         run: |
+          # تحديث ملف إعدادات بناء أندرويد ليتوافق مع أحدث إصدارات كوتلين Gradle
+          BUILD_GRADLE="android/build.gradle"
+          if [ -f "$BUILD_GRADLE" ]; then
+            if ! grep -q "kotlin_version" "$BUILD_GRADLE"; then
+              sed -i '1i buildscript { ext.kotlin_version = '\''1.9.22'\'' }' "$BUILD_GRADLE"
+            else
+              sed -i 's/kotlin_version = .*/kotlin_version = '\''1.9.22'\''/g' "$BUILD_GRADLE"
+            fi
+          fi
+
+          # تعديل الحد الأدنى لإصدار SDK وتفعيل الـ MultiDex
           APP_BUILD_FILE="android/app/build.gradle"
           if [ -f "$APP_BUILD_FILE" ]; then
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
