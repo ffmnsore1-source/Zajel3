@@ -46,7 +46,7 @@ jobs:
             fi
           fi
 
-      - name: Inject Full Original Zajel App Code With All Advanced Features
+      - name: Inject Fully Fixed Modern Zajel Code Without Losing Design
         run: |
           cat << 'EOF' > pubspec.yaml
           name: zajel
@@ -1125,9 +1125,12 @@ jobs:
             Future<void> _startRecording() async {
               try {
                 if (await _audioRecorder.hasPermission()) {
+                  // تعيين مسار حفظ مؤقت متوافق مع الحزمة الحديثة
+                  final tempDir = Directory.systemTemp;
+                  final path = '${tempDir.path}/zajel_audio_${DateTime.now().millisecondsSinceEpoch}.aac';
                   await _audioRecorder.start(
                     const RecordConfig(encoder: AudioEncoder.aacLc),
-                    path: '',
+                    path: path,
                   );
                   setState(() {
                     _isRecordingActive = true;
