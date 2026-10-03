@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -29,12 +30,11 @@ jobs:
 
       - name: Configure Gradle and Android Settings Properly
         run: |
-          # كتابة ملف settings.gradle بالشكل الصحيح الحديث لتجنب أخطاء البלאجنز
           cat << 'EOF' > android/settings.gradle
           pluginManagement {
               def flutterSdkPath = {
                   def properties = new Properties()
-                  def file = new file("local.properties")
+                  def file = new File("local.properties")
                   if (file.exists()) {
                       properties.load(new FileInputStream(file))
                   }
@@ -63,7 +63,6 @@ jobs:
           include ":app"
           EOF
 
-          # ضبط minSdkVersion إلى 23 و multiDexEnabled في ملف build.gradle
           APP_BUILD_FILE="android/app/build.gradle"
           if [ -f "$APP_BUILD_FILE" ]; then
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
