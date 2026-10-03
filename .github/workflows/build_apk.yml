@@ -27,7 +27,7 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android Properties, Sdk, and Kotlin Version Properly
+      - name: Fix Android Properties, Sdk, and Kotlin Version Definitively
         run: |
           PROP_FILE="android/gradle.properties"
           if [ -f "$PROP_FILE" ]; then
@@ -39,13 +39,7 @@ jobs:
             echo "android.useAndroidX=true" > "$PROP_FILE"
           fi
 
-          BUILD_FILE="android/app/build.gradle"
-          if [ -f "$BUILD_FILE" ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$BUILD_FILE"
-            sed -i 's/minSdk =.*/minSdk = 23/g' "$BUILD_FILE"
-          fi
-
-          # تعديل جذر ملف build.gradle لإجبار استخدام كوتلن 1.9.0 المتوافقة مع أحدث الحزم
+          # ضبط الـ Gradle وربط إصدار الكوتلن بشكل مباشر وصحيح لتفادي أي خطأ مفقود
           ROOT_BUILD_FILE="android/build.gradle"
           if [ -f "$ROOT_BUILD_FILE" ]; then
             cat << 'EOT' > "$ROOT_BUILD_FILE"
@@ -69,7 +63,7 @@ jobs:
           }
 
           buildscript {
-              ext.kotlin_version = '1.9.0'
+              ext.kotlin_version = '1.9.22'
               repositories {
                   google()
                   mavenCentral()
@@ -82,8 +76,11 @@ jobs:
           EOT
           fi
 
+          # إضافة إعدادات التطبيق الأساسية minSdk و multiDex
           APP_BUILD_FILE="android/app/build.gradle"
           if [ -f "$APP_BUILD_FILE" ]; then
+            sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
+            sed -i 's/minSdk =.*/minSdk = 23/g' "$APP_BUILD_FILE"
             if ! grep -q "multiDexEnabled" "$APP_BUILD_FILE"; then
               sed -i '/defaultConfig {/a \        multiDexEnabled true' "$APP_BUILD_FILE"
             fi
