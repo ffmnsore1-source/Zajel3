@@ -27,9 +27,43 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android MinSdk and Settings Properly
+      - name: Configure Gradle and Android Settings Properly
         run: |
-          # ضبط minSdkVersion إلى 23 في ملف build.gradle لتجنب أخطاء الحزم
+          # كتابة ملف settings.gradle بالشكل الصحيح الحديث لتجنب أخطاء البלאجنز
+          cat << 'EOF' > android/settings.gradle
+          pluginManagement {
+              def flutterSdkPath = {
+                  def properties = new Properties()
+                  def file = new file("local.properties")
+                  if (file.exists()) {
+                      properties.load(new FileInputStream(file))
+                  }
+                  def flutterSdkPath = properties.getProperty("flutter.sdk")
+                  if (flutterSdkPath == null) {
+                      flutterSdkPath = System.getenv("FLUTTER_ROOT")
+                  }
+                  return flutterSdkPath
+              }()
+
+              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
+          plugins {
+              id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+              id "com.android.application" version "7.3.0" apply false
+              id "org.jetbrains.kotlin.android" version "1.8.22" apply false
+          }
+
+          include ":app"
+          EOF
+
+          # ضبط minSdkVersion إلى 23 و multiDexEnabled في ملف build.gradle
           APP_BUILD_FILE="android/app/build.gradle"
           if [ -f "$APP_BUILD_FILE" ]; then
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
@@ -37,21 +71,6 @@ jobs:
             if ! grep -q "multiDexEnabled" "$APP_BUILD_FILE"; then
               sed -i '/defaultConfig {/a \        multiDexEnabled true' "$APP_BUILD_FILE"
             fi
-          fi
-
-          # ضبط إعدادات الـ plugins في settings.gradle
-          SETTINGS_FILE="android/settings.gradle"
-          if [ -f "$SETTINGS_FILE" ]; then
-            cat << 'EOF' > android/settings.gradle
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          include ':app'
-          EOF
           fi
 
       - name: Inject Full Original Zajel App Code With All Advanced Features
