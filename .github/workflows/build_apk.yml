@@ -27,33 +27,6 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Clean and Fix Gradle Setup Properly
-        run: |
-          # تصحيح ملف settings.gradle بشكل آمن ونظيف
-          SETTINGS_FILE="android/settings.gradle"
-          if [ -f "$SETTINGS_FILE" ]; then
-            cat << 'EOF' > android/settings.gradle
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          include ':app'
-          EOF
-          fi
-
-          # تصحيح ملف app/build.gradle
-          APP_BUILD_FILE="android/app/build.gradle"
-          if [ -f "$APP_BUILD_FILE" ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
-            sed -i 's/minSdk =.*/minSdk = 23/g' "$APP_BUILD_FILE"
-            if ! grep -q "multiDexEnabled" "$APP_BUILD_FILE"; then
-              sed -i '/defaultConfig {/a \        multiDexEnabled true' "$APP_BUILD_FILE"
-            fi
-          fi
-
       - name: Inject Full Original Zajel App Code With All Advanced Features
         run: |
           cat << 'EOF' > pubspec.yaml
