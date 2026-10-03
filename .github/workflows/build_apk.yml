@@ -27,14 +27,15 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android Gradle Properties and Sdk
+      - name: Fix Android Properties and Disable Shrinker R8
         run: |
           PROP_FILE="android/gradle.properties"
           if [ -f "$PROP_FILE" ]; then
             echo "android.useAndroidX=true" >> "$PROP_FILE"
             echo "android.enableJetifier=true" >> "$PROP_FILE"
+            echo "android.enableR8=false" >> "$PROP_FILE"
           else
-            printf "android.useAndroidX=true\nandroid.enableJetifier=true\n" > "$PROP_FILE"
+            printf "android.useAndroidX=true\nandroid.enableJetifier=true\nandroid.enableR8=false\n" > "$PROP_FILE"
           fi
 
           BUILD_FILE="android/app/build.gradle"
