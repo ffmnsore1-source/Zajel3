@@ -27,23 +27,22 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Configure build.gradle and MultiDex Safely
+      - name: Fix MinSdk and Gradle Safely
         run: |
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' "$BUILD_FILE"
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' "$BUILD_FILE"
+            # ضبط الـ minSdk حصرياً على 23 ليتوافق مع مكتبات الصوت والصورة
+            sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$BUILD_FILE"
+            sed -i 's/minSdk =.*/minSdk = 23/g' "$BUILD_FILE"
             
             python3 -c '
           path = "android/app/build.gradle"
           with open(path, "r") as f:
               content = f.read()
 
-          # تفعيل MultiDex في defaultConfig
           if "multiDexEnabled" not in content:
               content = content.replace("defaultConfig {", "defaultConfig {\n        multiDexEnabled true")
 
-          # ضبط الـ buildTypes لإيقاف التضارب
           if "minifyEnabled" not in content:
               target = "buildTypes {"
               replacement = "buildTypes {\n        release {\n            minifyEnabled false\n            shrinkResources false\n            signingConfig signingConfigs.debug\n        }"
@@ -54,9 +53,6 @@ jobs:
               f.write(content)
           '
           fi
-
-          # إضافة مكتبة multidex لملف الإعدادات الرئيسي android/app/build.gradle إن لم تكن موجودة
-          echo "dependencies { implementation 'androidx.multidex:multidex:2.0.1' }" >> android/app/build.gradle
 
       - name: Inject Full Original Zajel App Code with Real Media & Voice Fixed
         run: |
