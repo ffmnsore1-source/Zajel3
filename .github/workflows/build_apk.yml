@@ -27,56 +27,8 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android Properties, Sdk, and Kotlin Version Definitively
+      - name: Configure Android SDK and Min SDK
         run: |
-          PROP_FILE="android/gradle.properties"
-          if [ -f "$PROP_FILE" ]; then
-            grep -v "android.enableJetifier" "$PROP_FILE" > temp_prop && mv temp_prop "$PROP_FILE"
-            if ! grep -q "android.useAndroidX" "$PROP_FILE"; then
-              echo "android.useAndroidX=true" >> "$PROP_FILE"
-            fi
-          else
-            echo "android.useAndroidX=true" > "$PROP_FILE"
-          fi
-
-          # ضبط الـ Gradle وربط إصدار الكوتلن بشكل مباشر وصحيح لتفادي أي خطأ مفقود
-          ROOT_BUILD_FILE="android/build.gradle"
-          if [ -f "$ROOT_BUILD_FILE" ]; then
-            cat << 'EOT' > "$ROOT_BUILD_FILE"
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
-          rootProject.buildDir = '../build'
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-          }
-          subprojects {
-              project.evaluationDependsOn(':app')
-          }
-
-          tasks.register("clean", Delete) {
-              delete rootProject.buildDir
-          }
-
-          buildscript {
-              ext.kotlin_version = '1.9.22'
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:7.4.2'
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$ext.kotlin_version"
-              }
-          }
-          EOT
-          fi
-
-          # إضافة إعدادات التطبيق الأساسية minSdk و multiDex
           APP_BUILD_FILE="android/app/build.gradle"
           if [ -f "$APP_BUILD_FILE" ]; then
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$APP_BUILD_FILE"
