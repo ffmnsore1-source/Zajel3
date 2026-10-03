@@ -46,7 +46,7 @@ jobs:
             fi
           fi
 
-      - name: Inject Full Modern Zajel App Code with All Features Restored
+      - name: Inject Full Original Zajel App Code With All Advanced Features
         run: |
           cat << 'EOF' > pubspec.yaml
           name: zajel
@@ -388,6 +388,49 @@ jobs:
           class _ProfileScreenState extends State<ProfileScreen> {
             String _profileStatus = 'صورة احترافية نشطة';
 
+            void _editProfileImage() {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: const Color(0xFF161022),
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+                builder: (context) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(10))),
+                        const SizedBox(height: 18),
+                        const Text('تعديل الملف الشخصي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEADBFF))),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildOptionItem(icon: Icons.photo_library_rounded, color: const Color(0xFFC79FFF), title: 'المعرض', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة معرض جديدة'); }),
+                            _buildOptionItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة كاميرا جديدة'); }),
+                            _buildOptionItem(icon: Icons.delete_outline_rounded, color: Colors.redAccent, title: 'حذف', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'افتراضي'); }),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            Widget _buildOptionItem({required IconData icon, required Color color, required String title, required VoidCallback onTap}) {
+              return GestureDetector(
+                onTap: onTap,
+                child: Column(
+                  children: [
+                    CircleAvatar(radius: 28, backgroundColor: color.withOpacity(0.15), child: Icon(icon, color: color, size: 24)),
+                    const SizedBox(height: 8),
+                    Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white70)),
+                  ],
+                ),
+              );
+            }
+
             @override
             Widget build(BuildContext context) {
               return ValueListenableBuilder<bool>(
@@ -409,10 +452,31 @@ jobs:
                         children: [
                           const SizedBox(height: 28),
                           Center(
-                            child: CircleAvatar(
-                              radius: 54,
-                              backgroundColor: isDark ? const Color(0xFF191324) : Colors.grey.shade100,
-                              child: Icon(Icons.person, size: 68, color: isDark ? const Color(0xFFEADBFF) : Colors.blue),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: isDark ? const Color(0xFF6F35B4) : Colors.blue, width: 2)),
+                                  child: CircleAvatar(
+                                    radius: 54,
+                                    backgroundColor: isDark ? const Color(0xFF191324) : Colors.grey.shade100,
+                                    child: Icon(Icons.person, size: 68, color: isDark ? const Color(0xFFEADBFF) : Colors.blue),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: _editProfileImage,
+                                    child: CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: isDark ? const Color(0xFF6F35B4) : Colors.blue,
+                                      child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -422,11 +486,11 @@ jobs:
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: Column(
                               children: [
-                                _buildCard(isDark, Icons.person_outline_rounded, 'الاسم الكامل', 'مستخدم زاجل'),
+                                _buildModernProfileCard(isDark: isDark, icon: Icons.person_outline_rounded, title: 'الاسم الكامل', value: 'مستخدم زاجل', onEdit: () {}),
                                 const SizedBox(height: 12),
-                                _buildCard(isDark, Icons.phone_android_rounded, 'رقم الهاتف', '+964 770 000 0000'),
+                                _buildModernProfileCard(isDark: isDark, icon: Icons.phone_android_rounded, title: 'رقم الهاتف', value: '+964 770 000 0000', onEdit: () {}),
                                 const SizedBox(height: 12),
-                                _buildCard(isDark, Icons.info_outline_rounded, 'الحالة الشخصية', 'متاح للتواصل الفوري 🕊'),
+                                _buildModernProfileCard(isDark: isDark, icon: Icons.info_outline_rounded, title: 'الحالة الشخصية', value: 'متاح للتواصل الفوري 🕊', onEdit: () {}),
                               ],
                             ),
                           ),
@@ -438,7 +502,7 @@ jobs:
               );
             }
 
-            Widget _buildCard(bool isDark, IconData icon, String title, String value) {
+            Widget _buildModernProfileCard({required bool isDark, required IconData icon, required String title, required String value, required VoidCallback onEdit}) {
               return Container(
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF161022) : Colors.grey.shade50,
@@ -446,6 +510,7 @@ jobs:
                   border: Border.all(color: isDark ? Colors.white.withOpacity(0.04) : Colors.blue.shade100),
                 ),
                 child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(color: isDark ? const Color(0xFF221A30) : Colors.blue.shade100, borderRadius: BorderRadius.circular(12)),
@@ -453,6 +518,7 @@ jobs:
                   ),
                   title: Text(title, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
                   subtitle: Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                  trailing: IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: isDark ? const Color(0xFFC79FFF) : Colors.blue), onPressed: onEdit),
                 ),
               );
             }
@@ -482,7 +548,10 @@ jobs:
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('إعدادات المظهر', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFC79FFF) : Colors.blue)),
+                          Text(
+                            'إعدادات المظهر',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFC79FFF) : Colors.blue),
+                          ),
                           const SizedBox(height: 16),
                           Container(
                             decoration: BoxDecoration(
@@ -490,12 +559,28 @@ jobs:
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: isDark ? Colors.white.withOpacity(0.04) : Colors.blue.shade100),
                             ),
-                            child: SwitchListTile(
-                              secondary: Icon(isDark ? Icons.nights_stay_rounded : Icons.wb_sunny_rounded, color: isDark ? Colors.amberAccent : Colors.orange),
-                              title: Text(isDark ? 'الوضع الداكن' : 'الوضع الفاتح', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 14)),
-                              value: isDark,
-                              activeColor: Colors.blue,
-                              onChanged: (val) => themeNotifier.toggleTheme(val),
+                            child: Column(
+                              children: [
+                                SwitchListTile(
+                                  secondary: Icon(
+                                    isDark ? Icons.nights_stay_rounded : Icons.wb_sunny_rounded,
+                                    color: isDark ? Colors.amberAccent : Colors.orange,
+                                  ),
+                                  title: Text(
+                                    isDark ? 'الوضع الداكن' : 'الوضع الفاتح',
+                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  subtitle: Text(
+                                    'تغيير سمة التطبيق بالكامل',
+                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                                  ),
+                                  value: isDark,
+                                  activeColor: Colors.blue,
+                                  onChanged: (val) {
+                                    themeNotifier.toggleTheme(val);
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -515,13 +600,115 @@ jobs:
           }
 
           class _ChatListScreenState extends State<ChatListScreen> {
+            final TextEditingController _searchController = TextEditingController();
+            String _searchQuery = '';
+
             final List<Map<String, dynamic>> _chats = [
-              {'name': 'أحمد علي', 'lastMessage': 'أهلاً بك! كيف حالك اليوم؟', 'time': '10:30 ص', 'unread': 2, 'isOnline': true, 'color': const Color(0xFFC79FFF)},
-              {'name': 'فريق زاجل', 'lastMessage': 'مرحباً بك في تطبيق زاجل 🕊', 'time': 'أمس', 'unread': 0, 'isOnline': true, 'color': const Color(0xFF8A49DF)},
+              {
+                'name': 'أحمد علي',
+                'lastMessage': 'أهلاً بك! كيف حالك اليوم؟',
+                'time': '10:30 ص',
+                'unread': 2,
+                'isOnline': true,
+                'avatarColor': const Color(0xFFC79FFF)
+              },
+              {
+                'name': 'فريق زاجل',
+                'lastMessage': 'مرحباً بك في تطبيق زاجل 🕊',
+                'time': 'أمس',
+                'unread': 0,
+                'isOnline': true,
+                'avatarColor': const Color(0xFF8A49DF)
+              },
+              {
+                'name': 'سارة محمود',
+                'lastMessage': 'تم إرسال الملف المطلوب 👍',
+                'time': '08:15 ص',
+                'unread': 0,
+                'isOnline': false,
+                'avatarColor': const Color(0xFF9E5DF8)
+              },
             ];
 
             @override
+            void initState() {
+              super.initState();
+              _searchController.addListener(() {
+                setState(() {
+                  _searchQuery = _searchController.text.trim().toLowerCase();
+                });
+              });
+            }
+
+            @override
+            void dispose() {
+              _searchController.dispose();
+              super.dispose();
+            }
+
+            void _showLogoutDialog(BuildContext context, bool isDark) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  contentPadding: const EdgeInsets.all(20),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.red.withOpacity(0.15),
+                        child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 26),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('تسجيل الخروج', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                      const SizedBox(height: 8),
+                      Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                side: BorderSide(color: isDark ? Colors.deepPurple.shade700 : Colors.blue),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('إلغاء', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushReplacement(context, _smoothRoute(const LoginScreen()));
+                              },
+                              child: const Text('خروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            @override
             Widget build(BuildContext context) {
+              final filteredChats = _chats.where((chat) {
+                final name = chat['name'].toString().toLowerCase();
+                final message = chat['lastMessage'].toString().toLowerCase();
+                return name.contains(_searchQuery) || message.contains(_searchQuery);
+              }).toList();
+
               return ValueListenableBuilder<bool>(
                 valueListenable: themeNotifier,
                 builder: (context, isDark, child) {
@@ -532,50 +719,282 @@ jobs:
                       elevation: 0,
                       title: Text('المحادثات | Zajel', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
                       actions: [
-                        PopupMenuButton<String>(
-                          color: isDark ? const Color(0xFF161022) : Colors.white,
-                          icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white : Colors.black87, size: 20),
-                          onSelected: (val) {
-                            if (val == 'profile') Navigator.push(context, _smoothRoute(const ProfileScreen()));
-                            if (val == 'settings') Navigator.push(context, _smoothRoute(const SettingsScreen()));
-                            if (val == 'logout') Navigator.pushReplacement(context, _smoothRoute(const LoginScreen()));
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(value: 'profile', child: Text('الملف الشخصي')),
-                            const PopupMenuItem(value: 'settings', child: Text('الإعدادات')),
-                            const PopupMenuItem(value: 'logout', child: Text('تسجيل الخروج', style: TextStyle(color: Colors.redAccent))),
-                          ],
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: PopupMenuButton<String>(
+                            color: isDark ? const Color(0xFF161022) : Colors.white,
+                            icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white : Colors.black87, size: 20),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            onSelected: (value) {
+                              if (value == 'profile') {
+                                Navigator.push(context, _smoothRoute(const ProfileScreen()));
+                              } else if (value == 'settings') {
+                                Navigator.push(context, _smoothRoute(const SettingsScreen()));
+                              } else if (value == 'logout') {
+                                _showLogoutDialog(context, isDark);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'profile',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person_outline_rounded, color: isDark ? const Color(0xFFEADBFF) : Colors.blue, size: 18),
+                                    const SizedBox(width: 10),
+                                    Text('الملف الشخصي', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'settings',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.settings_outlined, color: isDark ? const Color(0xFFEADBFF) : Colors.blue, size: 18),
+                                    const SizedBox(width: 10),
+                                    Text('الإعدادات', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'logout',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.logout_rounded, color: Colors.redAccent, size: 18),
+                                    SizedBox(width: 10),
+                                    Text('تسجيل الخروج', style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    body: ListView.builder(
-                      itemCount: _chats.length,
-                      padding: const EdgeInsets.all(12),
-                      itemBuilder: (context, index) {
-                        final chat = _chats[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF161022) : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: isDark ? Colors.transparent : Colors.blue.shade100),
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: (chat['color'] as Color).withOpacity(0.2),
-                              child: Text(chat['name'][0], style: TextStyle(color: chat['color'], fontWeight: FontWeight.bold)),
+                    floatingActionButton: FloatingActionButton(
+                      backgroundColor: isDark ? const Color(0xFF6F35B4) : Colors.blue,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      onPressed: () {},
+                      child: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 22),
+                    ),
+                    body: Stack(
+                      children: [
+                        if (!isDark)
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: BirdPatternPainter(),
                             ),
-                            title: Text(chat['name'], style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                            subtitle: Text(chat['lastMessage'], style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                            onTap: () => Navigator.push(context, _smoothRoute(ChatScreen(userName: chat['name']))),
                           ),
-                        );
-                      },
+                        Column(
+                          children: [
+                            Container(
+                              color: isDark ? const Color(0xFF161022) : Colors.blue.shade50,
+                              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 14),
+                              child: Container(
+                                height: 42,
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF221A30) : Colors.white,
+                                  borderRadius: BorderRadius.circular(21),
+                                  border: Border.all(color: isDark ? Colors.white.withOpacity(0.04) : Colors.blue.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.search_rounded, color: isDark ? Colors.white70 : Colors.blue.shade700, size: 18),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _searchController,
+                                        style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+                                        decoration: InputDecoration(
+                                          hintText: 'البحث السريع...',
+                                          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_searchQuery.isNotEmpty)
+                                      GestureDetector(
+                                        onTap: () => _searchController.clear(),
+                                        child: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : Colors.black54, size: 16),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      height: 85,
+                                      child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        children: [
+                                          _buildStoryAvatar('قصتك', '🕊', isDark ? const Color(0xFF8A49DF) : Colors.blue, isAdd: true, isDark: isDark),
+                                          _buildStoryAvatar('أحمد', '👨', isDark ? const Color(0xFF9E5DF8) : Colors.blueAccent, isDark: isDark),
+                                          _buildStoryAvatar('زاجل', '🕊', isDark ? const Color(0xFF8A49DF) : Colors.indigo, isDark: isDark),
+                                          _buildStoryAvatar('سارة', '👩', isDark ? const Color(0xFFC79FFF) : Colors.blue, isDark: isDark),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                                      child: Text('الرسائل الأخيرة', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
+                                    ),
+                                    filteredChats.isEmpty
+                                        ? const Padding(
+                                            padding: EdgeInsets.all(30.0),
+                                            child: Center(child: Text('لا توجد نتائج مطابقة', style: TextStyle(color: Colors.grey, fontSize: 13))),
+                                          )
+                                        : ListView.builder(
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            itemCount: filteredChats.length,
+                                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                                            itemBuilder: (context, index) {
+                                              final chat = filteredChats[index];
+                                              return Container(
+                                                margin: const EdgeInsets.only(bottom: 8),
+                                                decoration: BoxDecoration(
+                                                  color: isDark ? const Color(0xFF161022) : Colors.white.withOpacity(0.95),
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  border: Border.all(color: isDark ? Colors.transparent : Colors.blue.shade100),
+                                                ),
+                                                child: ListTile(
+                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                                  leading: Stack(
+                                                    children: [
+                                                      CircleAvatar(
+                                                        radius: 24,
+                                                        backgroundColor: (chat['avatarColor'] as Color).withOpacity(0.2),
+                                                        child: Text(chat['name'][0], style: TextStyle(color: chat['avatarColor'], fontWeight: FontWeight.bold, fontSize: 16)),
+                                                      ),
+                                                      if (chat['isOnline'])
+                                                        Positioned(
+                                                          bottom: 1,
+                                                          right: 1,
+                                                          child: Container(
+                                                            width: 10,
+                                                            height: 10,
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.greenAccent,
+                                                              shape: BoxShape.circle,
+                                                              border: Border.all(color: isDark ? const Color(0xFF161022) : Colors.white, width: 2),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  title: Text(chat['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+                                                  subtitle: Text(
+                                                    chat['lastMessage'],
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(color: chat['unread'] > 0 ? (isDark ? Colors.white : Colors.blue.shade900) : Colors.grey.shade500, fontSize: 12),
+                                                  ),
+                                                  trailing: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                    children: [
+                                                      Text(chat['time'], style: TextStyle(fontSize: 10, color: chat['unread'] > 0 ? (isDark ? const Color(0xFFEADBFF) : Colors.blue) : Colors.grey)),
+                                                      const SizedBox(height: 4),
+                                                      if (chat['unread'] > 0)
+                                                        Container(
+                                                          padding: const EdgeInsets.all(5),
+                                                          decoration: BoxDecoration(color: isDark ? const Color(0xFF6F35B4) : Colors.blue, shape: BoxShape.circle),
+                                                          child: Text('${chat['unread']}', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  onTap: () {
+                                                    Navigator.push(context, _smoothRoute(ChatScreen(userName: chat['name'])));
+                                                  },
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 },
               );
             }
+
+            Widget _buildStoryAvatar(String name, String emoji, Color color, {bool isAdd = false, required bool isDark}) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: color, width: 2)),
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: color.withOpacity(0.2),
+                            child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                          ),
+                        ),
+                        if (isAdd)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(radius: 8, backgroundColor: isDark ? const Color(0xFF6F35B4) : Colors.blue, child: const Icon(Icons.add, size: 10, color: Colors.white)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(name, style: TextStyle(fontSize: 10, color: isDark ? Colors.white70 : Colors.grey.shade700)),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class BirdPatternPainter extends CustomPainter {
+            @override
+            void paint(Canvas canvas, Size size) {
+              final paint = Paint()
+                ..color = Colors.blue.withOpacity(0.04)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 1.2;
+
+              final List<Offset> birdPositions = [
+                Offset(size.width * 0.15, size.height * 0.12),
+                Offset(size.width * 0.82, size.height * 0.22),
+                Offset(size.width * 0.35, size.height * 0.45),
+                Offset(size.width * 0.75, size.height * 0.65),
+                Offset(size.width * 0.20, size.height * 0.82),
+                Offset(size.width * 0.60, size.height * 0.90),
+              ];
+
+              for (var pos in birdPositions) {
+                final path = Path();
+                path.moveTo(pos.dx - 12, pos.dy);
+                path.quadraticBezierTo(pos.dx - 6, pos.dy - 8, pos.dx, pos.dy);
+                path.quadraticBezierTo(pos.dx + 6, pos.dy - 8, pos.dx + 12, pos.dy);
+                canvas.drawPath(path, paint);
+              }
+            }
+
+            @override
+            bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
           }
 
           class ChatScreen extends StatefulWidget {
@@ -588,23 +1007,37 @@ jobs:
 
           class _ChatScreenState extends State<ChatScreen> {
             final _textController = TextEditingController();
+            final ValueNotifier<bool> _isTypingNotifier = ValueNotifier<bool>(false);
             final List<Map<String, dynamic>> _messages = [];
+
             final ImagePicker _picker = ImagePicker();
             late final AudioRecorder _audioRecorder;
             late final AudioPlayer _audioPlayer;
-            bool _isRecording = false;
+
+            bool _isRecordingActive = false;
+            bool _isLocked = false;
+            double _currentDragY = 0.0;
 
             @override
             void initState() {
               super.initState();
               _audioRecorder = AudioRecorder();
               _audioPlayer = AudioPlayer();
-              _messages.add({'type': 'text', 'content': 'أهلاً بك! معك ${widget.userName} 🕊', 'time': '8:28 م', 'isMe': false});
+              _textController.addListener(() {
+                _isTypingNotifier.value = _textController.text.trim().isNotEmpty;
+              });
+              _messages.add({
+                'type': 'text',
+                'content': 'أهلاً بك! معك ${widget.userName} 🕊',
+                'time': '8:28 م',
+                'isMe': 'false'
+              });
             }
 
             @override
             void dispose() {
               _textController.dispose();
+              _isTypingNotifier.dispose();
               _audioRecorder.dispose();
               _audioPlayer.dispose();
               super.dispose();
@@ -613,40 +1046,143 @@ jobs:
             void _sendMessage() {
               if (_textController.text.trim().isEmpty) return;
               setState(() {
-                _messages.add({'type': 'text', 'content': _textController.text, 'time': '8:29 م', 'isMe': true});
+                _messages.add({
+                  'type': 'text',
+                  'content': _textController.text,
+                  'time': '8:29 م',
+                  'isMe': 'true'
+                });
               });
               _textController.clear();
             }
 
-            Future<void> _pickImage() async {
-              final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+            Future<void> _pickAndSendImage(ImageSource source) async {
+              final XFile? image = await _picker.pickImage(source: source);
               if (image != null) {
                 setState(() {
-                  _messages.add({'type': 'image', 'content': image.path, 'time': '8:30 م', 'isMe': true});
+                  _messages.add({
+                    'type': 'image',
+                    'content': image.path,
+                    'time': '8:30 م',
+                    'isMe': 'true'
+                  });
                 });
               }
+            }
+
+            void _showAttachmentMenu(bool isDark) {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                builder: (context) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(10))),
+                        const SizedBox(height: 16),
+                        Text('إرفاق ملف أو محتوى', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFEADBFF) : Colors.blue.shade900)),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildAttachmentItem(icon: Icons.image_rounded, color: isDark ? const Color(0xFF9E5DF8) : Colors.blue, title: 'معرض', onTap: () { Navigator.pop(context); _pickAndSendImage(ImageSource.gallery); }),
+                            _buildAttachmentItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); _pickAndSendImage(ImageSource.camera); }),
+                            _buildAttachmentItem(icon: Icons.person_rounded, color: Colors.orangeAccent, title: 'جهة اتصال', onTap: () { Navigator.pop(context); _addTextMsg('👤 جهة اتصال'); }),
+                            _buildAttachmentItem(icon: Icons.insert_drive_file_rounded, color: Colors.blueAccent, title: 'مستند', onTap: () { Navigator.pop(context); _addTextMsg('📄 ملف مستند'); }),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            void _addTextMsg(String content) {
+              setState(() {
+                _messages.add({'type': 'text', 'content': content, 'time': '8:30 م', 'isMe': 'true'});
+              });
+            }
+
+            Widget _buildAttachmentItem({required IconData icon, required Color color, required String title, required VoidCallback onTap}) {
+              return GestureDetector(
+                onTap: onTap,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(radius: 24, backgroundColor: color.withOpacity(0.15), child: Icon(icon, color: color, size: 22)),
+                    const SizedBox(height: 6),
+                    Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.grey)),
+                  ],
+                ),
+              );
             }
 
             Future<void> _startRecording() async {
-              if (await _audioRecorder.hasPermission()) {
-                await _audioRecorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: '');
-                setState(() => _isRecording = true);
+              try {
+                if (await _audioRecorder.hasPermission()) {
+                  await _audioRecorder.start(
+                    const RecordConfig(encoder: AudioEncoder.aacLc),
+                    path: '',
+                  );
+                  setState(() {
+                    _isRecordingActive = true;
+                    _isLocked = false;
+                    _currentDragY = 0.0;
+                  });
+                }
+              } catch (e) {
+                debugPrint('خطأ في التسجيل: $e');
               }
             }
 
-            Future<void> _stopRecording() async {
+            void _updateRecording(DragUpdateDetails details) {
+              if (!_isRecordingActive) return;
+              setState(() {
+                _currentDragY += details.delta.dy;
+                if (_currentDragY < -40) {
+                  _isLocked = true;
+                }
+              });
+            }
+
+            Future<void> _endRecording() async {
+              if (!_isRecordingActive) return;
+              if (_isLocked) return;
+              
               final path = await _audioRecorder.stop();
-              setState(() => _isRecording = false);
-              if (path != null) {
-                setState(() {
-                  _messages.add({'type': 'voice', 'content': path, 'time': '8:35 م', 'isMe': true});
-                });
-              }
+              setState(() {
+                _isRecordingActive = false;
+                _isLocked = false;
+                _currentDragY = 0.0;
+                if (path != null) {
+                  _messages.add({
+                    'type': 'voice',
+                    'content': path,
+                    'time': '8:35 م',
+                    'isMe': 'true'
+                  });
+                }
+              });
+            }
+
+            Future<void> _cancelRecording() async {
+              await _audioRecorder.stop();
+              setState(() {
+                _isRecordingActive = false;
+                _isLocked = false;
+                _currentDragY = 0.0;
+              });
             }
 
             Future<void> _playVoice(String path) async {
               if (path.isNotEmpty) {
-                await _audioPlayer.play(DeviceFileSource(path));
+                Source urlSource = DeviceFileSource(path);
+                await _audioPlayer.play(urlSource);
               }
             }
 
@@ -657,69 +1193,350 @@ jobs:
                 builder: (context, isDark, child) {
                   return Scaffold(
                     backgroundColor: isDark ? const Color(0xFF0F0C15) : Colors.white,
-                    appBar: AppBar(
-                      backgroundColor: isDark ? const Color(0xFF161022) : Colors.blue.shade50,
-                      elevation: 0,
-                      title: Text(widget.userName, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16)),
-                      leading: IconButton(icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black87), onPressed: () => Navigator.pop(context)),
-                    ),
-                    body: Column(
-                      children: [
-                        Expanded(
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(12),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final msg = _messages[index];
-                              final isMe = msg['isMe'] == true;
-                              return Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: isMe ? (isDark ? const Color(0xFF4A1E85) : Colors.blue) : (isDark ? const Color(0xFF1E172B) : Colors.grey.shade100),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: msg['type'] == 'voice'
-                                      ? Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(icon: const Icon(Icons.play_arrow, color: Colors.white), onPressed: () => _playVoice(msg['content'])),
-                                            const Text('رسالة صوتية 🎤', style: TextStyle(color: Colors.white)),
-                                          ],
-                                        )
-                                      : msg['type'] == 'image'
-                                          ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(msg['content']), width: 150, height: 150, fit: BoxFit.cover))
-                                          : Text(msg['content'], style: TextStyle(color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87))),
-                                ),
-                              );
-                            },
+                    appBar: PreferredSize(
+                      preferredSize: const Size.fromHeight(60),
+                      child: AppBar(
+                        backgroundColor: isDark ? const Color(0xFF161022) : Colors.blue.shade50,
+                        elevation: 0,
+                        leading: Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black87, size: 16),
+                            onPressed: () => Navigator.pop(context),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              IconButton(icon: Icon(Icons.image, color: isDark ? const Color(0xFFC79FFF) : Colors.blue), onPressed: _pickImage),
-                              Expanded(
-                                child: TextField(
-                                  controller: _textController,
-                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                                  decoration: InputDecoration(
-                                    hintText: 'اكتب رسالة...',
-                                    hintStyle: TextStyle(color: Colors.grey.shade500),
-                                    border: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Colors.red : (isDark ? const Color(0xFFC79FFF) : Colors.blue)),
-                                onPressed: _isRecording ? _stopRecording : _startRecording,
-                              ),
-                              IconButton(icon: const Icon(Icons.send, color: Colors.blue), onPressed: _sendMessage),
-                            ],
+                        title: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: isDark ? const Color(0xFF221A30) : Colors.blue.shade100,
+                              child: Text(widget.userName[0], style: TextStyle(color: isDark ? const Color(0xFFEADBFF) : Colors.blue, fontWeight: FontWeight.bold, fontSize: 14)),
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(widget.userName, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.bold)),
+                                const Text('متصل الآن', style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                            decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.blue.shade100, borderRadius: BorderRadius.circular(10)),
+                            child: IconButton(
+                              icon: Icon(Icons.videocam_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 18),
+                              onPressed: () {},
+                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.blue.shade100, borderRadius: BorderRadius.circular(10)),
+                            child: IconButton(
+                              icon: Icon(Icons.phone_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 18),
+                              onPressed: () {},
+                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    body: Stack(
+                      children: [
+                        if (!isDark)
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: BirdPatternPainter(),
+                            ),
+                          ),
+                        Column(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, index) {
+                                  final msg = _messages[index];
+                                  final isMe = msg['isMe'] == 'true';
+                                  final type = msg['type'];
+
+                                  return Align(
+                                    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(vertical: 5),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+                                      decoration: BoxDecoration(
+                                        gradient: isMe
+                                            ? (isDark
+                                                ? const LinearGradient(colors: [Color(0xFF4A1E85), Color(0xFF351563)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                                                : null)
+                                            : null,
+                                        color: isMe
+                                            ? (isDark ? null : Colors.blue)
+                                            : (isDark ? const Color(0xFF1E172B) : Colors.grey.shade100),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: type == 'voice'
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(Icons.play_arrow_rounded, color: isMe ? Colors.white : Colors.blue, size: 24),
+                                                  onPressed: () => _playVoice(msg['content']),
+                                                ),
+                                                const Text('رسالة صوتية حقيقية 🎤', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                              ],
+                                            )
+                                          : type == 'image'
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  child: Image.file(
+                                                    File(msg['content']),
+                                                    width: 180,
+                                                    height: 180,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                  children: [
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(bottom: 4),
+                                                      child: Text(msg['content']!, style: TextStyle(color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87), fontSize: 14)),
+                                                    ),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(msg['time']!, style: TextStyle(fontSize: 10, color: isMe ? Colors.white54 : Colors.grey)),
+                                                        const SizedBox(width: 4),
+                                                        Icon(Icons.done_all_rounded, color: isMe ? (isDark ? const Color(0xFFC79FFF) : Colors.white70) : Colors.blue, size: 12),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                            SafeArea(
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  if (_isRecordingActive)
+                                    Positioned(
+                                      right: 16,
+                                      top: _isLocked ? -55 : -40 + (_currentDragY.clamp(-40.0, 0.0)),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 100),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF221A30) : Colors.white),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, -2))
+                                          ],
+                                          border: Border.all(color: _isLocked ? Colors.white : (isDark ? const Color(0xFF6F35B4) : Colors.blue), width: 1.5),
+                                        ),
+                                        child: Icon(
+                                          _isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                                          color: _isLocked ? Colors.white : (isDark ? const Color(0xFFC79FFF) : Colors.blue),
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF161022) : Colors.white,
+                                        borderRadius: BorderRadius.circular(24),
+                                        border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.blue.shade200),
+                                      ),
+                                      child: _isRecordingActive
+                                          ? Container(
+                                              height: 42,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: _isLocked ? Colors.red.shade700 : (isDark ? const Color(0xFF6D56E8) : Colors.blue),
+                                                borderRadius: BorderRadius.circular(21),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Text(
+                                                    'جاري التسجيل...',
+                                                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                                  ),
+                                                  const Spacer(),
+                                                  GestureDetector(
+                                                    onTap: _cancelRecording,
+                                                    child: Container(
+                                                      width: 30,
+                                                      height: 30,
+                                                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                                      child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade700, size: 16),
+                                                    ),
+                                                  ),
+                                                  if (_isLocked) ...[
+                                                    const SizedBox(width: 8),
+                                                    GestureDetector(
+                                                      onTap: () async {
+                                                        final path = await _audioRecorder.stop();
+                                                        setState(() {
+                                                          _isRecordingActive = false;
+                                                          _isLocked = false;
+                                                          if (path != null) {
+                                                            _messages.add({'type': 'voice', 'content': path, 'time': '8:35 م', 'isMe': 'true'});
+                                                          }
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                                        child: Icon(Icons.send_rounded, color: Colors.red.shade700, size: 16),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            )
+                                          : Row(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    if (isTyping) return const SizedBox.shrink();
+                                                    return SizedBox(
+                                                      width: 38,
+                                                      height: 38,
+                                                      child: IconButton(
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(),
+                                                        icon: CustomPaint(
+                                                          size: const Size(20, 20),
+                                                          painter: StickerIconPainter(isDark: isDark),
+                                                        ),
+                                                        onPressed: () {},
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                    child: TextField(
+                                                      controller: _textController,
+                                                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+                                                      maxLines: 4,
+                                                      minLines: 1,
+                                                      decoration: InputDecoration(
+                                                        hintText: 'اكتب رسالتك...',
+                                                        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                                                        border: InputBorder.none,
+                                                        isDense: true,
+                                                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    if (isTyping) return const SizedBox.shrink();
+                                                    return SizedBox(
+                                                      width: 38,
+                                                      height: 38,
+                                                      child: IconButton(
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(),
+                                                        icon: Icon(Icons.attach_file_rounded, color: isDark ? const Color(0xFFC79FFF) : Colors.blue, size: 20),
+                                                        onPressed: () => _showAttachmentMenu(isDark),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                ValueListenableBuilder<bool>(
+                                                  valueListenable: _isTypingNotifier,
+                                                  builder: (context, isTyping, child) {
+                                                    return AnimatedSwitcher(
+                                                      duration: const Duration(milliseconds: 250),
+                                                      child: isTyping
+                                                          ? Padding(
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: GestureDetector(
+                                                                onTap: _sendMessage,
+                                                                child: Container(
+                                                                  width: 38,
+                                                                  height: 38,
+                                                                  decoration: BoxDecoration(
+                                                                    color: isDark ? const Color(0xFF8B5CF6) : Colors.blue,
+                                                                    borderRadius: BorderRadius.circular(19),
+                                                                  ),
+                                                                  child: Center(
+                                                                    child: Transform.rotate(
+                                                                      angle: -0.25,
+                                                                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 17),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            )
+                                                          : Padding(
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: GestureDetector(
+                                                                onPanStart: (_) => _startRecording(),
+                                                                onPanUpdate: (details) => _updateRecording(details),
+                                                                onPanEnd: (_) => _endRecording(),
+                                                                child: Container(
+                                                                  width: 38,
+                                                                  height: 38,
+                                                                  decoration: BoxDecoration(
+                                                                    shape: BoxShape.circle,
+                                                                    gradient: isDark
+                                                                        ? const LinearGradient(
+                                                                            colors: [Color(0xFF8A49DF), Color(0xFF4A1E85)],
+                                                                            begin: Alignment.topLeft,
+                                                                            end: Alignment.bottomRight,
+                                                                          )
+                                                                        : null,
+                                                                    color: isDark ? null : Colors.blue,
+                                                                  ),
+                                                                  child: const Center(
+                                                                    child: Icon(
+                                                                      Icons.mic_rounded,
+                                                                      color: Colors.white,
+                                                                      size: 17,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -727,6 +1544,53 @@ jobs:
                 },
               );
             }
+          }
+
+          class StickerIconPainter extends CustomPainter {
+            final bool isDark;
+            StickerIconPainter({required this.isDark});
+
+            @override
+            void paint(Canvas canvas, Size size) {
+              final paint = Paint()
+                ..color = isDark ? const Color(0xFFC79FFF) : Colors.blue
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2.0
+                ..strokeCap = StrokeCap.round
+                ..strokeJoin = StrokeJoin.round;
+
+              final path = Path();
+              path.addRRect(RRect.fromRectAndRadius(
+                Rect.fromLTWH(2.0, 2.0, size.width - 4, size.height - 4),
+                const Radius.circular(5),
+              ));
+              canvas.drawPath(path, paint);
+
+              final fillDot = Paint()
+                ..color = isDark ? const Color(0xFFC79FFF) : Colors.blue
+                ..style = PaintingStyle.fill;
+
+              canvas.drawCircle(Offset(size.width * 0.38, size.height * 0.38), 1.5, fillDot);
+              canvas.drawCircle(Offset(size.width * 0.62, size.height * 0.38), 1.5, fillDot);
+
+              final smilePath = Path();
+              smilePath.moveTo(size.width * 0.35, size.height * 0.52);
+              smilePath.quadraticBezierTo(size.width * 0.5, size.height * 0.66, size.width * 0.65, size.height * 0.52);
+              canvas.drawPath(smilePath, paint);
+
+              final foldPath = Path();
+              foldPath.moveTo(size.width - 2.0, size.height * 0.54);
+              foldPath.quadraticBezierTo(
+                size.width * 0.72,
+                size.height * 0.58,
+                size.width * 0.58,
+                size.height - 2.0,
+              );
+              canvas.drawPath(foldPath, paint);
+            }
+
+            @override
+            bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
           }
           EOF
 
