@@ -27,11 +27,18 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix MinSdk and Gradle Safely
+      - name: Fix Android Gradle Properties and Sdk
         run: |
+          PROP_FILE="android/gradle.properties"
+          if [ -f "$PROP_FILE" ]; then
+            echo "android.useAndroidX=true" >> "$PROP_FILE"
+            echo "android.enableJetifier=true" >> "$PROP_FILE"
+          else
+            printf "android.useAndroidX=true\nandroid.enableJetifier=true\n" > "$PROP_FILE"
+          fi
+
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
-            # ضبط الـ minSdk حصرياً على 23 ليتوافق مع مكتبات الصوت والصورة
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk =.*/minSdk = 23/g' "$BUILD_FILE"
             
@@ -42,12 +49,6 @@ jobs:
 
           if "multiDexEnabled" not in content:
               content = content.replace("defaultConfig {", "defaultConfig {\n        multiDexEnabled true")
-
-          if "minifyEnabled" not in content:
-              target = "buildTypes {"
-              replacement = "buildTypes {\n        release {\n            minifyEnabled false\n            shrinkResources false\n            signingConfig signingConfigs.debug\n        }"
-              if target in content:
-                  content = content.replace(target, replacement, 1)
 
           with open(path, "w") as f:
               f.write(content)
@@ -1602,7 +1603,7 @@ jobs:
           }
           EOF
 
-      - name: Build APK
+      - name: Build APK (No Shrink)
         run: flutter build apk --release --no-shrink
 
       - name: Upload APK Artifact
