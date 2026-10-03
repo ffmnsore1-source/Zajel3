@@ -27,7 +27,7 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Android Properties, Sdk, and Kotlin Version
+      - name: Fix Android Properties and Gradle Setup
         run: |
           PROP_FILE="android/gradle.properties"
           if [ -f "$PROP_FILE" ]; then
@@ -43,36 +43,19 @@ jobs:
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion.*/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk =.*/minSdk = 23/g' "$BUILD_FILE"
-            
-            python3 -c '
-          path = "android/app/build.gradle"
-          with open(path, "r") as f:
-              content = f.read()
-
-          if "multiDexEnabled" not in content:
-              content = content.replace("defaultConfig {", "defaultConfig {\n        multiDexEnabled true")
-
-          with open(path, "w") as f:
-              f.write(content)
-          '
           fi
 
+          # إضافة multiDex وإصدار كوتلن بشكل مباشر وسليم دون تعقيد بايثون
           ROOT_BUILD_FILE="android/build.gradle"
           if [ -f "$ROOT_BUILD_FILE" ]; then
-            python3 -c '
-          path = "android/build.gradle"
-          with open(path, "r") as f:
-              content = f.read()
+            echo "buildscript { ext.kotlin_version = '1.8.22' }" >> "$ROOT_BUILD_FILE"
+          fi
 
-          if "ext.kotlin_version" in content:
-              import re
-              content = re.sub(r"ext.kotlin_version\s*=\s*['\"][^'\"]+['\"]", "ext.kotlin_version = '\''1.8.22'\''", content)
-          else:
-              content = "buildscript {\n    ext.kotlin_version = '\''1.8.22'\''\n}\n" + content
-
-          with open(path, "w") as f:
-              f.write(content)
-          '
+          APP_BUILD_FILE="android/app/build.gradle"
+          if [ -f "$APP_BUILD_FILE" ]; then
+            if ! grep -q "multiDexEnabled" "$APP_BUILD_FILE"; then
+              sed -i '/defaultConfig {/a \        multiDexEnabled true' "$APP_BUILD_FILE"
+            fi
           fi
 
       - name: Inject Full Original Zajel App Code with Real Media & Voice Fixed
