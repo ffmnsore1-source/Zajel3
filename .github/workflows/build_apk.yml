@@ -27,15 +27,14 @@ jobs:
         run: |
           flutter create . --org com.zajel --project-name zajel --platforms=android
 
-      - name: Fix Kotlin and Gradle Versions
+      - name: Fix Kotlin and Gradle Versions Properly
         run: |
-          # تحديث ملف إعدادات بناء أندرويد ليتوافق مع أحدث إصدارات كوتلين Gradle
-          BUILD_GRADLE="android/build.gradle"
-          if [ -f "$BUILD_GRADLE" ]; then
-            if ! grep -q "kotlin_version" "$BUILD_GRADLE"; then
-              sed -i '1i buildscript { ext.kotlin_version = '\''1.9.22'\'' }' "$BUILD_GRADLE"
-            else
-              sed -i 's/kotlin_version = .*/kotlin_version = '\''1.9.22'\''/g' "$BUILD_GRADLE"
+          # تعديل إصدار Kotlin في ملف الإعدادات الحديث settings.gradle ليتوافق مع الحزم الحديثة
+          SETTINGS_FILE="android/settings.gradle"
+          if [ -f "$SETTINGS_FILE" ]; then
+            sed -i 's/kotlin_version = .*/kotlin_version = "1.9.24"/g' "$SETTINGS_FILE"
+            if ! grep -q "kotlin_version" "$SETTINGS_FILE"; then
+              sed -i '1i plugins { id "dev.flutter.flutter-plugin-loader" version "1.0.0"; id "com.android.application" version "7.3.0" apply false; id "org.jetbrains.kotlin.android" version "1.9.24" apply false }' "$SETTINGS_FILE"
             fi
           fi
 
