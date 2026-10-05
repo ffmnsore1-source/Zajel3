@@ -15,5 +15,12 @@ jobs:
           channel: 'stable'
       - name: Create fresh android files
         run: flutter create . --org com.example --project-name zajel_app --platforms=android
+      - name: Update minSdk version
+        run: |
+          BUILD_FILE="android/app/build.gradle"
+          if [ -f "$BUILD_FILE" ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
+          fi
       - run: flutter pub get
       - run: flutter build apk --release
