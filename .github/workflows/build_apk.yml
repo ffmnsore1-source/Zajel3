@@ -23,4 +23,4 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
       - run: flutter pub get
-      - run: flutter build apk --release
+      - run: flutter build apk --release --no-shrink
