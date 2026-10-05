@@ -15,20 +15,19 @@ jobs:
           channel: 'stable'
       - name: Create fresh android files
         run: flutter create . --org com.example --project-name zajel_app --platforms=android
-      - name: Fix build configuration
+      - name: Force Fix Android Configuration
         run: |
-          # Fix minSdk
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
-          # Fix Kotlin version in project build.gradle
-          PROJ_FILE="android/build.gradle"
-          if [ -f "$PROJ_FILE" ]; then
-            echo "buildscript { ext.kotlin_version = '1.9.22' } " >> "$PROJ_FILE"
-          else
-            echo "plugins { id 'org.jetbrains.kotlin.android' version '1.9.22' apply false }" > android/settings.gradle
+          
+          # التأكد من دعم كوتلن بشكل حديث وسليم
+          PROP_FILE="android/gradle.properties"
+          if [ -f "$PROP_FILE" ]; then
+            echo "android.useAndroidX=true" >> "$PROP_FILE"
+            echo "android.enableJetifier=true" >> "$PROP_FILE"
           fi
       - run: flutter pub get
-      - run: flutter build apk --release --no-shrink
+      - run: flutter build apk --release --no-shrink --no-tree-shake-icons
