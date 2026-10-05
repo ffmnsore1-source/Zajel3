@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
+          flutter-version: '3.19.6'
           channel: 'stable'
       - name: Create fresh android files
         run: flutter create . --org com.example --project-name zajel_app --platforms=android
