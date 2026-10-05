@@ -13,6 +13,7 @@ jobs:
         with:
           flutter-version: '3.x'
           channel: 'stable'
+      - name: Create fresh android files
+        run: flutter create . --org com.example --project-name zajel_app --platforms=android
       - run: flutter pub get
       - run: flutter build apk --release
- 
