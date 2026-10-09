@@ -35,13 +35,12 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
           
-          # تحديث إصدار الكوتلن
+          # تعديل إصدار الكوتلن بالطريقة المباشرة والمضمونة في ملف الـ build.gradle الرئيسي
           PROJECT_BUILD_FILE="android/build.gradle"
           if [ -f "$PROJECT_BUILD_FILE" ]; then
-            sed -i '/buildscript {/a \    ext.kotlin_version = '\''1.8.22'\'' ' "$PROJECT_BUILD_FILE"
+            echo "buildscript { ext.kotlin_version = '1.9.0' }" > "$PROJECT_BUILD_FILE"
+            echo "allprojects { repositories { google() mavenCentral() } }" >> "$PROJECT_BUILD_FILE"
           fi
 
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
-        env:
-          DISABLE_R8: "true"
