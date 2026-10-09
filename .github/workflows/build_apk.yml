@@ -35,11 +35,10 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
           
-          # تصحيح صيغة إصدار الكوتلن ومستودعات الجرادل بالشكل الصحيح تماماً
+          # إضافة إصدار الكوتلن في أعلى ملف الـ build.gradle بطريقة آمنة دون حذف المحتويات الأصلية
           PROJECT_BUILD_FILE="android/build.gradle"
           if [ -f "$PROJECT_BUILD_FILE" ]; then
-            echo "buildscript { ext.kotlin_version = '1.9.0' }" > "$PROJECT_BUILD_FILE"
-            echo "allprojects { repositories { google(); mavenCentral() } }" >> "$PROJECT_BUILD_FILE"
+            sed -i '1i buildscript { ext.kotlin_version = "1.9.0" }' "$PROJECT_BUILD_FILE"
           fi
 
       - run: flutter pub get
