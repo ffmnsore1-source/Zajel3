@@ -34,14 +34,6 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
-          
-          # تعطيل الـ R8 وخطأ الـ bytecode نهائياً (الخطوة الخاصة بالخطأ الأخير فقط)
-          PROP_FILE="android/gradle.properties"
-          if [ -f "$PROP_FILE" ]; then
-            echo "android.enableR8=false" >> "$PROP_FILE"
-          else
-            echo "android.enableR8=false" > "$PROP_FILE"
-          fi
 
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
