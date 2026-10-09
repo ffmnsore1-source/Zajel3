@@ -36,4 +36,4 @@ jobs:
           fi
 
       - run: flutter pub get
-      - run: flutter build apk --release --no-shrink --no-minified --no-tree-shake-icons
+      - run: flutter build apk --release --no-shrink --no-tree-shake-icons
