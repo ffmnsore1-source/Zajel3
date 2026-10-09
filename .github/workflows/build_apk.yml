@@ -35,7 +35,7 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
           
-          # كتابة محتوى ملف android/build.gradle بالصيغة الصحيحة تماماً متضمنة إصدار الكوتلن
+          # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
           echo "    ext.kotlin_version = '1.8.22'" >> "$PROJECT_BUILD_FILE"
@@ -57,4 +57,4 @@ jobs:
           echo "}" >> "$PROJECT_BUILD_FILE"
 
       - run: flutter pub get
-      - run: flutter build apk --release --no-shrink --no-tree-shake-icons
+      - run: flutter build apk --release --no-shrink --no-tree-shake-icons --split-per-abi=false
