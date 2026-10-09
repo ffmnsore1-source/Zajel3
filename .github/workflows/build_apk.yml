@@ -15,11 +15,12 @@ jobs:
           channel: 'stable'
       - name: Create fresh android files
         run: flutter create . --org com.example --project-name zajel_app --platforms=android
-      - name: Disable R8 and fix config
+      - name: Clean gradle properties
         run: |
           PROP_FILE="android/gradle.properties"
-          echo "android.enableR8=false" >> "$PROP_FILE"
-          echo "android.enableR8.libraries=false" >> "$PROP_FILE"
+          if [ -f "$PROP_FILE" ]; then
+            echo "android.enableR8=false" >> "$PROP_FILE"
+          fi
           
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
