@@ -35,11 +35,26 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
           
-          # إضافة إصدار الكوتلن بطريقة آمنة وسليمة خالية من أخطاء التنسيق
+          # كتابة محتوى ملف android/build.gradle بالصيغة الصحيحة تماماً متضمنة إصدار الكوتلن
           PROJECT_BUILD_FILE="android/build.gradle"
-          if [ -f "$PROJECT_BUILD_FILE" ]; then
-            sed -i "1i buildscript { ext.kotlin_version = '1.8.22' }" "$PROJECT_BUILD_FILE"
-          fi
+          echo "buildscript {" > "$PROJECT_BUILD_FILE"
+          echo "    ext.kotlin_version = '1.8.22'" >> "$PROJECT_BUILD_FILE"
+          echo "    repositories {" >> "$PROJECT_BUILD_FILE"
+          echo "        google()" >> "$PROJECT_BUILD_FILE"
+          echo "        mavenCentral()" >> "$PROJECT_BUILD_FILE"
+          echo "    }" >> "$PROJECT_BUILD_FILE"
+          echo "    dependencies {" >> "$PROJECT_BUILD_FILE"
+          echo "        classpath 'com.android.tools.build:gradle:7.4.2'" >> "$PROJECT_BUILD_FILE"
+          echo "        classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version\"" >> "$PROJECT_BUILD_FILE"
+          echo "    }" >> "$PROJECT_BUILD_FILE"
+          echo "}" >> "$PROJECT_BUILD_FILE"
+          echo "" >> "$PROJECT_BUILD_FILE"
+          echo "allprojects {" >> "$PROJECT_BUILD_FILE"
+          echo "    repositories {" >> "$PROJECT_BUILD_FILE"
+          echo "        google()" >> "$PROJECT_BUILD_FILE"
+          echo "        mavenCentral()" >> "$PROJECT_BUILD_FILE"
+          echo "    }" >> "$PROJECT_BUILD_FILE"
+          echo "}" >> "$PROJECT_BUILD_FILE"
 
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
