@@ -14,25 +14,31 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
       
-      - name: Automatic Project Generation & Build
+      - name: Setup Modern Project Environment & Build
         run: |
-          # الاحتفاظ بنسخة من كود برمجياتك (ملفات الـ lib و pubspec)
-          mkdir -p temp_backup
-          if [ -d "lib" ]; then cp -r lib temp_backup/; fi
-          if [ -f "pubspec.yaml" ]; then cp pubspec.yaml temp_backup/; fi
+          # الاحتفاظ بنسخة آمنة من كود المشروع الأصلي
+          mkdir -p secure_backup
+          if [ -d "lib" ]; then cp -r lib secure_backup/; fi
+          if [ -f "pubspec.yaml" ]; then cp pubspec.yaml secure_backup/; fi
           
-          # توليد مشروع فلاتر كامل ونظيف يدعم أحدث إصدارات الأندرويد والكوتلن
+          # إنشاء هيكل أندرويد حديث ونظيف كلياً
           flutter create . --org com.example --project-name zajel_app --platforms=android
           
-          # استعادة الكود الخاص بك داخل المشروع الجديد
-          if [ -d "temp_backup/lib" ]; then rm -rf lib/* && cp -r temp_backup/lib/* lib/; fi
-          if [ -f "temp_backup/pubspec.yaml" ]; then cp temp_backup/pubspec.yaml ./; fi
+          # استعادة كود التطبيق الخاص بك
+          if [ -d "secure_backup/lib" ]; then rm -rf lib/* && cp -r secure_backup/lib/* lib/; fi
+          if [ -f "secure_backup/pubspec.yaml" ]; then cp secure_backup/pubspec.yaml ./; fi
           
-          # ضبط الحد الأدنى لإصدار الأندرويد (minSdk 23)
+          # تحديث إعدادات الأندرويد ورفع minSdk إلى 23
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
+          fi
+          
+          # ضبط وتحديث نسخة كوتلن بشكل حديث ليتوافق مع أحدث المتطلبات
+          SETTINGS_FILE="android/settings.gradle"
+          if [ -f "$SETTINGS_FILE" ]; then
+            sed -i "s/version '1.8.22' version '1.9.24'/g" "$SETTINGS_FILE" || true
           fi
 
       - run: flutter pub get
