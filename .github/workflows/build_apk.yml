@@ -13,19 +13,27 @@ jobs:
         with:
           flutter-version: '3.19.6'
           channel: 'stable'
-      - name: Create fresh android files
-        run: flutter create . --org com.example --project-name zajel_app --platforms=android
-      - name: Clean gradle properties
+      
+      - name: Create fresh complete Flutter project
         run: |
-          PROP_FILE="android/gradle.properties"
-          if [ -f "$PROP_FILE" ]; then
-            echo "android.enableR8=false" >> "$PROP_FILE"
-          fi
+          # الاحتفاظ بملفات الكود الحقيقية الخاصة بك في المجلد المؤقت
+          mkdir -p temp_lib temp_pubspec
+          if [ -d "lib" ]; then cp -r lib/* temp_lib/; fi
+          if [ -f "pubspec.yaml" ]; then cp pubspec.yaml temp_pubspec/; fi
           
+          # إنشاء مشروع جديد كلياً ونظيف يدعم أحدث بنية أندرويد
+          flutter create . --org com.example --project-name zajel_app --platforms=android
+          
+          # استعادة ملفاتك البرمجية الأصلية
+          if [ -d "temp_lib" ] && [ "$(ls -A temp_lib)" ]; then rm -rf lib/* && cp -r temp_lib/* lib/; fi
+          if [ -f "temp_pubspec/pubspec.yaml" ]; then cp temp_pubspec/pubspec.yaml ./; fi
+          
+          # تعديل الحد الأدنى لإصدار الأندرويد داخل المشروع المنشأ تلقائياً
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
+
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
