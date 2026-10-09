@@ -33,10 +33,6 @@ jobs:
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
-            
-            # تعطيل الـ minify و shrinkResources بداخل ملف البناء حصراً لمنع الخطأ الأخير
-            sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
-            sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
           fi
           
           # تحديث إصدار الكوتلن
@@ -47,3 +43,5 @@ jobs:
 
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
+        env:
+          DISABLE_R8: "true"
