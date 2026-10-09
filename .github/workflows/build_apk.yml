@@ -35,10 +35,19 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
           fi
           
-          # كتابة إصدار الكوتلن في أول سطر من ملف الـ build.gradle بطريقة مضمونة تماماً
+          # إضافة إصدار الكوتلن بالطريقة البرمجية الدقيقة داخل ملف الـ build.gradle الرئيسي
           PROJECT_BUILD_FILE="android/build.gradle"
           if [ -f "$PROJECT_BUILD_FILE" ]; then
-            echo "ext.kotlin_version = '1.8.22'" | cat - "$PROJECT_BUILD_FILE" > temp && mv temp "$PROJECT_BUILD_FILE"
+            python3 -c "
+with open('$PROJECT_BUILD_FILE', 'r') as f:
+    content = f.read()
+if 'buildscript {' in content:
+    content = content.replace('buildscript {', 'buildscript {\n    ext.kotlin_version = \"1.8.22\"')
+else:
+    content = 'buildscript {\n    ext.kotlin_version = \"1.8.22\"\n}\n' + content
+with open('$PROJECT_BUILD_FILE', 'w') as f:
+    f.write(content)
+"
           fi
 
       - run: flutter pub get
