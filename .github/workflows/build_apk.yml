@@ -15,19 +15,16 @@ jobs:
           channel: 'stable'
       - name: Create fresh android files
         run: flutter create . --org com.example --project-name zajel_app --platforms=android
-      - name: Force Fix Android Configuration
+      - name: Disable R8 and fix config
         run: |
+          PROP_FILE="android/gradle.properties"
+          echo "android.enableR8=false" >> "$PROP_FILE"
+          echo "android.enableR8.libraries=false" >> "$PROP_FILE"
+          
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
-          fi
-          
-          # التأكد من دعم كوتلن بشكل حديث وسليم
-          PROP_FILE="android/gradle.properties"
-          if [ -f "$PROP_FILE" ]; then
-            echo "android.useAndroidX=true" >> "$PROP_FILE"
-            echo "android.enableJetifier=true" >> "$PROP_FILE"
           fi
       - run: flutter pub get
       - run: flutter build apk --release --no-shrink --no-tree-shake-icons
