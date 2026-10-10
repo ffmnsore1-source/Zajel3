@@ -1,76 +1,41 @@
-name: Build Flutter APK
+name: Build Android APK
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v3
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
-      
-      - name: Generate Project and Build APK
-        run: |
-          # 1. الاحتفاظ بنسخة آمنة ومحمية من كود التطبيق الخاص بك
-          mkdir -p my_backup
-          if [ -d "lib" ]; then cp -r lib my_backup/; fi
-          if [ -f "pubspec.yaml" ]; then cp pubspec.yaml my_backup/; fi
-          
-          # 2. إنشاء هيكل أندرويد حديث ومتوافق مع المعايير المعاصرة
-          flutter create . --org com.example --project-name zajel_app --platforms=android
-          
-          # 3. استعادة كود التطبيق الخاص بك بدقة تامة
-          if [ -d "my_backup/lib" ]; then rm -rf lib/* && cp -r my_backup/lib/* lib/; fi
-          if [ -f "my_backup/pubspec.yaml" ]; then cp "my_backup/pubspec.yaml" ./; fi
-          
-          # 4. تحديث إعدادات الأندرويد المعيارية: رفع SDK إلى 23، تفعيل MultiDex، وتعطيل الـ Shrinker والـ Minify نهائياً
-          BUILD_FILE="android/app/build.gradle"
-          if [ -f "$BUILD_FILE" ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
-            sed -i '/defaultConfig {/a \    multiDexEnabled true' "$BUILD_FILE"
-            sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
-            sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
-          fi
-          
-          # 5. إنشاء ملف قواعد ProGuard حديث لمنع أي فحص أو تقليص للـ bytecode
-          PROGUARD_FILE="android/app/proguard-rules.pro"
-          echo "-dontshrink" > "$PROGUARD_FILE"
-          echo "-dontoptimize" >> "$PROGUARD_FILE"
-          echo "-dontobfuscate" >> "$PROGUARD_FILE"
-          echo "-ignorewarnings" >> "$PROGUARD_FILE"
-          
-          # 6. ضبط ملف الـ build.gradle الرئيسي وإصدار الكوتلن المستقر والمحدث 1.9.24
-          PROJECT_BUILD_FILE="android/build.gradle"
-          echo "buildscript {" > "$PROJECT_BUILD_FILE"
-          echo "    ext.kotlin_version = '1.9.24'" >> "$PROJECT_BUILD_FILE"
-          echo "    repositories {" >> "$PROJECT_BUILD_FILE"
-          echo "        google()" >> "$PROJECT_BUILD_FILE"
-          echo "        mavenCentral()" >> "$PROJECT_BUILD_FILE"
-          echo "    }" >> "$PROJECT_BUILD_FILE"
-          echo "    dependencies {" >> "$PROJECT_BUILD_FILE"
-          echo "        classpath 'com.android.tools.build:gradle:7.4.2'" >> "$PROJECT_BUILD_FILE"
-          echo "        classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version\"" >> "$PROJECT_BUILD_FILE"
-          echo "    }" >> "$PROJECT_BUILD_FILE"
-          echo "}" >> "$PROJECT_BUILD_FILE"
-          echo "" >> "$PROJECT_BUILD_FILE"
-          echo "allprojects {" >> "$PROJECT_BUILD_FILE"
-          echo "    repositories {" >> "$PROJECT_BUILD_FILE"
-          echo "        google()" >> "$PROJECT_BUILD_FILE"
-          echo "        mavenCentral()" >> "$PROJECT_BUILD_FILE"
-          echo "    }" >> "$PROJECT_BUILD_FILE"
-          echo "}" >> "$PROJECT_BUILD_FILE"
+          distribution: temurin
+          java-version: '17'
 
-      - name: Get Dependencies
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Release APK
-        run: flutter build apk --release --no-shrink --no-tree-shake-icons
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
