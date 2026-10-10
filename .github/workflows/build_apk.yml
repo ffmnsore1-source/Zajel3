@@ -31,11 +31,22 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter Version
+      - name: Show Flutter Version
         run: flutter --version
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
+      - name: Check Project Files
+        run: |
+          echo "Checking Android project files..."
+          ls -la
+          ls -la android || true
+          ls -la android/app || true
+
+      - name: Restore Android Project
+        run: |
+          flutter create --platforms=android --org com.example .
+          echo "Android project files after restoration:"
+          ls -la android
+          ls -la android/app
 
       - name: Get Dependencies
         run: flutter pub get
@@ -44,10 +55,7 @@ jobs:
         run: flutter pub deps
 
       - name: Build APK
-        run: |
-          flutter doctor -v
-          flutter pub deps
-          flutter build apk --release -v
+        run: flutter build apk --release -v
 
       - name: Upload APK
         if: success()
