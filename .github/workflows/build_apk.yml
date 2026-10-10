@@ -39,6 +39,13 @@ jobs:
             sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
           fi
           
+          # إنشاء ملف قواعد ProGuard يمنع R8 والـ Shrinker تماماً من فحص أو تقليص الـ bytecode
+          PROGUARD_FILE="android/app/proguard-rules.pro"
+          echo "-dontshrink" > "$PROGUARD_FILE"
+          echo "-dontoptimize" >> "$PROGUARD_FILE"
+          echo "-dontobfuscate" >> "$PROGUARD_FILE"
+          echo "-ignorewarnings" >> "$PROGUARD_FILE"
+          
           # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
