@@ -34,22 +34,19 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الـ minify والـ shrinkResources جذرياً ومنع تشغيلهما نهائياً
-            sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
-            sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
-            
-            # إضافة سطر صريح لتعطيل الـ shrinker داخل ملف الـ buildTypes إن لم يكن موجوداً
-            if ! grep -q "minifyEnabled false" "$BUILD_FILE"; then
-              sed -i '/buildTypes {/,/release {/ s/release {/release {\n        minifyEnabled false\n        shrinkResources false/' "$BUILD_FILE"
-            fi
+            # تعطيل الـ minify والـ shrink جذرياً وبشكل قاطع لمنع ظهور خطأ الـ Shrinker نهائياً
+            python3 -c "
+            path = '$BUILD_FILE'
+            with open(path, 'r') as f:
+                content = f.read()
+            if 'minifyEnabled true' in content:
+                content = content.replace('minifyEnabled true', 'minifyEnabled false')
+            elif 'minifyEnabled false' not in content and 'release {' in content:
+                content = content.replace('release {', 'release {\n        minifyEnabled false\n        shrinkResources false')
+            with open(path, 'w') as f:
+                f.write(content)
+            "
           fi
-          
-          # إنشاء ملف قواعد ProGuard فارغ ومعطل تماماً للتقليص والتحسين
-          PROGUARD_FILE="android/app/proguard-rules.pro"
-          echo "-dontshrink" > "$PROGUARD_FILE"
-          echo "-dontoptimize" >> "$PROGUARD_FILE"
-          echo "-dontobfuscate" >> "$PROGUARD_FILE"
-          echo "-ignorewarnings" >> "$PROGUARD_FILE"
           
           # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
           PROJECT_BUILD_FILE="android/build.gradle"
