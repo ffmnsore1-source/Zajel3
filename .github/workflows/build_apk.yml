@@ -16,32 +16,33 @@ jobs:
       
       - name: Generate Project and Build APK
         run: |
-          # الاحتفاظ بنسخة آمنة من كود التطبيق
+          # 1. الاحتفاظ بنسخة آمنة من كود التطبيق الخاص بك
           mkdir -p my_backup
           if [ -d "lib" ]; then cp -r lib my_backup/; fi
           if [ -f "pubspec.yaml" ]; then cp pubspec.yaml my_backup/; fi
           
-          # إنشاء هيكل أندرويد متوافق ونظيف
+          # 2. إنشاء هيكل أندرويد نظيف ومتوافق
           flutter create . --org com.example --project-name zajel_app --platforms=android
           
-          # استعادة كود التطبيق الخاص بك
+          # 3. استعادة كود التطبيق الخاص بك بدقة
           if [ -d "my_backup/lib" ]; then rm -rf lib/* && cp -r my_backup/lib/* lib/; fi
           if [ -f "my_backup/pubspec.yaml" ]; then cp "my_backup/pubspec.yaml" ./; fi
           
-          # رفع الحد الأدنى لإصدار الأندرويد ليكون 23 وتفعيل الـ MultiDex لضمان نجاح التجميع
+          # 4. رفع الحد الأدنى لإصدار الأندرويد ليكون 23 وتفعيل الـ MultiDex
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الـ minify وضمان عدم حدوث مشاكل في الـ bytecode
-            python3 -c "path='$BUILD_FILE'; c=open(path).read(); c=c.replace('minifyEnabled true', 'minifyEnabled false'); open(path, 'w').write(c)"
+            # تعطيل الـ minify والـ shrinkResources جذرياً لمنع أخطاء الـ Shrinker نهائياً
+            sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
+            sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
             
-            # حقن سطر تفعيل الـ multiDex داخل قسم الـ defaultConfig لمنع خطأ الفشل التجميعي
+            # إضافة تفعيل الـ MultiDex لمنع أي خطأ تجميعي
             sed -i '/defaultConfig {/a \    multiDexEnabled true' "$BUILD_FILE"
           fi
           
-          # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
+          # 5. ضبط ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت والمستقر (1.8.22)
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
           echo "    ext.kotlin_version = '1.8.22'" >> "$PROJECT_BUILD_FILE"
