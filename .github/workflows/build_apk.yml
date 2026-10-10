@@ -33,9 +33,13 @@ jobs:
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
+            
+            # تعطيل الضغط و الـ minify حصراً لمنع الخطأ الأخير
+            sed -i '/ buildTypes {/,/release {/ s/minifyEnabled true/minifyEnabled false/' "$BUILD_FILE" || true
+            sed -i '/ buildTypes {/,/release {/ s/shrinkResources true/shrinkResources false/' "$BUILD_FILE" || true
           fi
           
-          # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن
+          # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن (تم تثبيته مسبقاً)
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
           echo "    ext.kotlin_version = '1.8.22'" >> "$PROJECT_BUILD_FILE"
