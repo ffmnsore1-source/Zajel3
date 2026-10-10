@@ -28,14 +28,17 @@ jobs:
           if [ -d "my_backup/lib" ]; then rm -rf lib/* && cp -r my_backup/lib/* lib/; fi
           if [ -f "my_backup/pubspec.yaml" ]; then cp "my_backup/pubspec.yaml" ./; fi
           
-          # رفع الحد الأدنى لإصدار الأندرويد ليكون 23 تماشياً مع متطلبات الحزم
+          # رفع الحد الأدنى لإصدار الأندرويد ليكون 23 وتفعيل الـ MultiDex لضمان نجاح التجميع
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الـ minify عبر بايثون بسطر واحد آمن تماماً من أخطاء المسافات
+            # تعطيل الـ minify وضمان عدم حدوث مشاكل في الـ bytecode
             python3 -c "path='$BUILD_FILE'; c=open(path).read(); c=c.replace('minifyEnabled true', 'minifyEnabled false'); open(path, 'w').write(c)"
+            
+            # حقن سطر تفعيل الـ multiDex داخل قسم الـ defaultConfig لمنع خطأ الفشل التجميعي
+            sed -i '/defaultConfig {/a \    multiDexEnabled true' "$BUILD_FILE"
           fi
           
           # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
