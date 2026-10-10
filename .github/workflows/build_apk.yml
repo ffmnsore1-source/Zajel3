@@ -28,23 +28,15 @@ jobs:
           if [ -d "my_backup/lib" ]; then rm -rf lib/* && cp -r my_backup/lib/* lib/; fi
           if [ -f "my_backup/pubspec.yaml" ]; then cp "my_backup/pubspec.yaml" ./; fi
           
-          # رفع الحد الأدنى لإصدار الأندرويد ليكون 23 وتعطيل الـ Shrinker جذرياً من ملفات الجرادل
+          # رفع الحد الأدنى لإصدار الأندرويد ليكون 23 تماشياً مع متطلبات الحزم
           BUILD_FILE="android/app/build.gradle"
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعديل خصائص الـ release لإيقاف الضغط تماماً بشكل جذري
+            # تعطيل الضغط لمنع الأخطاء
             sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
             sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
-          fi
-          
-          # إضافة تعطيل الـ R8 في ملف gradle.properties لمنع أي محاولة ضغط خلفية
-          PROPERTIES_FILE="android/gradle.properties"
-          if [ -f "$PROPERTIES_FILE" ]; then
-            echo "android.enableR8=false" >> "$PROPERTIES_FILE"
-          else
-            echo "android.enableR8=false" > "$PROPERTIES_FILE"
           fi
           
           # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
