@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Zajel APK
 
 on:
   workflow_dispatch:
@@ -7,35 +7,53 @@ on:
       - main
       - master
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Install dependencies
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Dependencies
         run: flutter pub get
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Check Dependencies
+        run: flutter pub deps
 
-      - name: Upload APK artifact
+      - name: Build APK
+        run: |
+          flutter doctor -v
+          flutter pub deps
+          flutter build apk --release -v
+
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
+          name: zajel-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+          retention-days: 7
