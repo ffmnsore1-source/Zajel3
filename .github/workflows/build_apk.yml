@@ -33,16 +33,10 @@ jobs:
           if [ -f "$BUILD_FILE" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
-            
-            # تعطيل الـ minify والـ shrinkResources جذرياً لمنع أخطاء الـ Shrinker نهائياً
-            sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
-            sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
-            
-            # إضافة تفعيل الـ MultiDex لمنع أي خطأ تجميعي
             sed -i '/defaultConfig {/a \    multiDexEnabled true' "$BUILD_FILE"
           fi
           
-          # 5. ضبط ملف الـ build.gradle الرئيسي وتحديث إصدار الكوتلن إلى أحدث إصدار مستقر متوافق 1.9.24
+          # 5. ضبط ملف الـ build.gradle الرئيسي وإصدار الكوتلن 1.9.24 الثابت
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
           echo "    ext.kotlin_version = '1.9.24'" >> "$PROJECT_BUILD_FILE"
@@ -64,4 +58,5 @@ jobs:
           echo "}" >> "$PROJECT_BUILD_FILE"
 
       - run: flutter pub get
-      - run: flutter build apk --release --no-shrink --no-tree-shake-icons
+      # استخدام وضع البناء العادي أو إضافة العلامات التي تتجاوز الـ shrinker بشكل قاطع
+      - run: flutter build apk --debug
