@@ -34,18 +34,8 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الـ minify والـ shrink جذرياً وبشكل قاطع لمنع ظهور خطأ الـ Shrinker نهائياً
-            python3 -c "
-            path = '$BUILD_FILE'
-            with open(path, 'r') as f:
-                content = f.read()
-            if 'minifyEnabled true' in content:
-                content = content.replace('minifyEnabled true', 'minifyEnabled false')
-            elif 'minifyEnabled false' not in content and 'release {' in content:
-                content = content.replace('release {', 'release {\n        minifyEnabled false\n        shrinkResources false')
-            with open(path, 'w') as f:
-                f.write(content)
-            "
+            # تعطيل الـ minify عبر بايثون بسطر واحد آمن تماماً من أخطاء المسافات
+            python3 -c "path='$BUILD_FILE'; c=open(path).read(); c=c.replace('minifyEnabled true', 'minifyEnabled false'); open(path, 'w').write(c)"
           fi
           
           # إعداد ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت
