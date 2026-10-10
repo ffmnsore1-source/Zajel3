@@ -42,10 +42,10 @@ jobs:
             sed -i '/defaultConfig {/a \    multiDexEnabled true' "$BUILD_FILE"
           fi
           
-          # 5. ضبط ملف الـ build.gradle الرئيسي وإصدار الكوتلن الثابت والمستقر (1.8.22)
+          # 5. ضبط ملف الـ build.gradle الرئيسي وتحديث إصدار الكوتلن إلى أحدث إصدار مستقر متوافق 1.9.24
           PROJECT_BUILD_FILE="android/build.gradle"
           echo "buildscript {" > "$PROJECT_BUILD_FILE"
-          echo "    ext.kotlin_version = '1.8.22'" >> "$PROJECT_BUILD_FILE"
+          echo "    ext.kotlin_version = '1.9.24'" >> "$PROJECT_BUILD_FILE"
           echo "    repositories {" >> "$PROJECT_BUILD_FILE"
           echo "        google()" >> "$PROJECT_BUILD_FILE"
           echo "        mavenCentral()" >> "$PROJECT_BUILD_FILE"
