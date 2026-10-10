@@ -34,12 +34,17 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' "$BUILD_FILE"
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' "$BUILD_FILE"
             
-            # تعطيل الضغط لمنع الأخطاء
+            # تعطيل الـ minify والـ shrinkResources جذرياً ومنع تشغيلهما نهائياً
             sed -i 's/minifyEnabled true/minifyEnabled false/g' "$BUILD_FILE"
             sed -i 's/shrinkResources true/shrinkResources false/g' "$BUILD_FILE"
+            
+            # إضافة سطر صريح لتعطيل الـ shrinker داخل ملف الـ buildTypes إن لم يكن موجوداً
+            if ! grep -q "minifyEnabled false" "$BUILD_FILE"; then
+              sed -i '/buildTypes {/,/release {/ s/release {/release {\n        minifyEnabled false\n        shrinkResources false/' "$BUILD_FILE"
+            fi
           fi
           
-          # إنشاء ملف قواعد ProGuard يمنع R8 والـ Shrinker تماماً من فحص أو تقليص الـ bytecode
+          # إنشاء ملف قواعد ProGuard فارغ ومعطل تماماً للتقليص والتحسين
           PROGUARD_FILE="android/app/proguard-rules.pro"
           echo "-dontshrink" > "$PROGUARD_FILE"
           echo "-dontoptimize" >> "$PROGUARD_FILE"
