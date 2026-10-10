@@ -36,15 +36,17 @@ jobs:
 
       - name: Check Project Files
         run: |
-          echo "Checking Android project files..."
+          echo "===== PROJECT ROOT ====="
           ls -la
+          echo "===== ANDROID DIRECTORY ====="
           ls -la android || true
+          echo "===== ANDROID APP DIRECTORY ====="
           ls -la android/app || true
 
       - name: Restore Android Project
         run: |
           flutter create --platforms=android --org com.example .
-          echo "Android project files after restoration:"
+          echo "===== RESTORED ANDROID FILES ====="
           ls -la android
           ls -la android/app
 
@@ -55,7 +57,31 @@ jobs:
         run: flutter pub deps
 
       - name: Build APK
-        run: flutter build apk --release -v
+        run: |
+          set -o pipefail
+          flutter build apk --release -v 2>&1 | tee build_log.txt
+
+      - name: Show Error Summary
+        if: failure()
+        run: |
+          echo "===== BUILD ERROR SUMMARY ====="
+          if [ -f build_log.txt ]; then
+            grep -n -i -E \
+              "error:|exception:|failed|v1 embedding|requires a higher|what went wrong" \
+              build_log.txt | tail -40 || true
+          else
+            echo "Build log does not exist."
+            echo "Check the failed step above."
+          fi
+
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zajel-build-log
+          path: build_log.txt
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload APK
         if: success()
