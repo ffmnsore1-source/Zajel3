@@ -5,18 +5,16 @@ on:
   push:
     branches:
       - main
-      - master
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -29,59 +27,54 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
 
-      - name: Show Flutter Version
-        run: flutter --version
-
-      - name: Check Project Files
+      - name: Show project files
         run: |
-          echo "===== PROJECT ROOT ====="
+          echo "===== ROOT ====="
           ls -la
-          echo "===== ANDROID DIRECTORY ====="
+          echo "===== ANDROID ====="
           ls -la android || true
-          echo "===== ANDROID APP DIRECTORY ====="
+          echo "===== ANDROID APP ====="
           ls -la android/app || true
 
-      - name: Restore Android Project
+      - name: Restore Android scaffolding if missing
         run: |
-          flutter create --platforms=android --org com.example .
-          echo "===== RESTORED ANDROID FILES ====="
-          ls -la android
-          ls -la android/app
+          if [ ! -f android/settings.gradle ] && [ ! -f android/settings.gradle.kts ]; then
+            flutter create --platforms=android --org com.example .
+          fi
 
-      - name: Get Dependencies
+      - name: Get dependencies
         run: flutter pub get
 
-      - name: Check Dependencies
-        run: flutter pub deps
-
-      - name: Build APK
+      - name: Build APK and save full log
+        id: build_apk
+        continue-on-error: true
         run: |
           set -o pipefail
           flutter build apk --release -v 2>&1 | tee build_log.txt
 
-      - name: Show Error Summary
-        if: failure()
+      - name: Show useful error lines
+        if: steps.build_apk.outcome == 'failure'
         run: |
-          echo "===== BUILD ERROR SUMMARY ====="
-          if [ -f build_log.txt ]; then
-            grep -n -i -E \
-              "error:|exception:|failed|v1 embedding|requires a higher|what went wrong" \
-              build_log.txt | tail -40 || true
-          else
-            echo "Build log does not exist."
-            echo "Check the failed step above."
-          fi
+          echo "===== POSSIBLE ROOT CAUSE ====="
+          grep -n -i -E \
+            "what went wrong|error:|exception|requires a higher|v1 embedding|could not|failed" \
+            build_log.txt | tail -80 || true
+          echo "===== LAST 150 LINES ====="
+          tail -150 build_log.txt
 
-      - name: Upload Build Log
+      - name: Upload diagnostic log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zajel-build-log
+          name: zajel-build-diagnostic
           path: build_log.txt
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Fail if APK build failed
+        if: steps.build_apk.outcome == 'failure'
+        run: exit 1
 
       - name: Upload APK
         if: success()
