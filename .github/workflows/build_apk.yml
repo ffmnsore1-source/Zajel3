@@ -1,3 +1,4 @@
+
 name: Build Zajel APK
 
 on:
@@ -43,6 +44,21 @@ jobs:
             flutter create --platforms=android --org com.example .
           fi
 
+      - name: Remove duplicate Kotlin MainActivity
+        run: |
+          if [ -f android/app/src/main/java/com/example/zajel/MainActivity.java ]; then
+            if [ -d android/app/src/main/kotlin ]; then
+              find android/app/src/main/kotlin -type f -name "MainActivity.kt" -print -delete
+            fi
+          fi
+
+      - name: Verify MainActivity files
+        run: |
+          echo "===== JAVA ====="
+          find android/app/src/main/java -type f -name "MainActivity.java" -print || true
+          echo "===== KOTLIN ====="
+          find android/app/src/main/kotlin -type f -name "MainActivity.kt" -print || true
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -58,7 +74,7 @@ jobs:
         run: |
           echo "===== POSSIBLE ROOT CAUSE ====="
           grep -n -i -E \
-            "what went wrong|error:|exception|requires a higher|v1 embedding|could not|failed" \
+            "what went wrong|error:|exception|requires a higher|v1 embedding|could not|failed|redeclaration" \
             build_log.txt | tail -80 || true
           echo "===== LAST 150 LINES ====="
           tail -150 build_log.txt
