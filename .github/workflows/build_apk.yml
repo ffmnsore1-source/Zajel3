@@ -62,6 +62,17 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Show Android signing fingerprints
+        continue-on-error: true
+        run: |
+          cd android
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew signingReport
+          else
+            echo "Gradle wrapper not found; fingerprints were not generated."
+          fi
+
       - name: Build APK and save full log
         id: build_apk
         continue-on-error: true
