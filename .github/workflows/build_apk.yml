@@ -62,9 +62,27 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create temporary Android debug keystore
+        run: |
+          mkdir -p "$HOME/.config/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.config/.android/debug.keystore" \
+            -storepass android \
+            -alias AndroidDebugKey \
+            -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Show Android signing fingerprints
         continue-on-error: true
         run: |
+          echo "===== ANDROID SHA FINGERPRINTS ====="
+          keytool -list -v \
+            -keystore "$HOME/.config/.android/debug.keystore" \
+            -storepass android \
+            -alias AndroidDebugKey | grep -E "SHA1:|SHA256:"
+
+          echo "===== GRADLE SIGNING REPORT ====="
           cd android
           if [ -f ./gradlew ]; then
             chmod +x ./gradlew
