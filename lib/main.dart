@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: password,
         );
       }
-      await _saveUserProfile(result.user);
+      unawaited(_saveUserProfile(result.user));
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
