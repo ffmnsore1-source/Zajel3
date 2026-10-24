@@ -102,106 +102,121 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _busy = false;
+  bool _createAccount = false;
+  bool _showPassword = false;
 
-  bool _sendingCode = false;
-
-  Future<void> _sendCode() async {
-    final phoneNumber = _phoneController.text.trim();
-
-    if (phoneNumber.isEmpty || !phoneNumber.startsWith('+')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('اكتب رقم الهاتف مع رمز الدولة، مثل +9647700000000'),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _sendingCode = true);
-
-    try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: const Duration(seconds: 60),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          try {
-            final result = await FirebaseAuth.instance
-                .signInWithCredential(credential);
-            await _saveUserProfile(result.user);
-            if (!mounted) return;
-            Navigator.pushAndRemoveUntil(
-              context,
-              _smoothRoute(const ChatListScreen()),
-              (route) => false,
-            );
-          } on FirebaseAuthException catch (error) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('تعذّر تسجيل الدخول: ${error.message ?? error.code}')),
-              );
-            }
-          }
-        },
-        verificationFailed: (FirebaseAuthException error) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('فشل إرسال الرمز: ${error.message ?? error.code}'),
-            ),
-          );
-          setState(() => _sendingCode = false);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          if (!mounted) return;
-          setState(() => _sendingCode = false);
-          Navigator.push(
-            context,
-            _smoothRoute(
-              OtpVerificationScreen(
-                phoneNumber: phoneNumber,
-                verificationId: verificationId,
-              ),
-            ),
-          );
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
-      );
-    } on FirebaseAuthException catch (error) {
-      if (!mounted) return;
-      setState(() => _sendingCode = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذّر إرسال الرمز: ${error.message ?? error.code}')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _sendingCode = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ أثناء إرسال الرمز: $error')),
-      );
-    }
+  void _message(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> _saveUserProfile(User? user) async {
     if (user == null) return;
-
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
         {
           'uid': user.uid,
-          'phoneNumber': user.phoneNumber,
+          'email': user.email,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
     } catch (_) {
-      // Authentication should still succeed if Firestore is not configured yet.
+      // Keep authentication working even if the Firestore rules are not configured yet.
+    }
+  }
+
+  Future<void> _submit() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || !email.contains('@')) {
+      _message('اكتب بريد إلكتروني صحيح.');
+      return;
+    }
+    if (password.length < 6) {
+      _message('كلمة المرور لازم تكون 6 أحرف أو أكثر.');
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      UserCredential result;
+      if (_createAccount) {
+        result = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } else {
+        result = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      }
+      await _saveUserProfile(result.user);
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        _smoothRoute(const ChatListScreen()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (error) {
+      final String message;
+      switch (error.code) {
+        case 'email-already-in-use':
+          message = 'هذا البريد مسجّل مسبقاً. جرّب تسجيل الدخول.';
+          break;
+        case 'invalid-email':
+          message = 'صيغة البريد الإلكتروني غير صحيحة.';
+          break;
+        case 'weak-password':
+          message = 'كلمة المرور ضعيفة؛ استخدم 6 أحرف على الأقل.';
+          break;
+        case 'user-not-found':
+        case 'wrong-password':
+        case 'invalid-credential':
+          message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+          break;
+        case 'operation-not-allowed':
+          message = 'فعّل خيار Email/Password من Firebase Authentication.';
+          break;
+        case 'network-request-failed':
+          message = 'تحقّق من اتصال الإنترنت وحاول مرة ثانية.';
+          break;
+        default:
+          message = 'تعذّر إكمال العملية: ${error.message ?? error.code}';
+      }
+      _message(message);
+    } catch (error) {
+      _message('حدث خطأ غير متوقع: $error');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      _message('اكتب بريدك الإلكتروني أولاً لاستعادة كلمة المرور.');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      _message('إذا كان البريد مسجلاً، ستصلك رسالة لاستعادة كلمة المرور.');
+    } on FirebaseAuthException catch (error) {
+      _message('تعذّر إرسال رسالة الاستعادة: ${error.message ?? error.code}');
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -210,197 +225,156 @@ class _LoginScreenState extends State<LoginScreen> {
     return ValueListenableBuilder<bool>(
       valueListenable: themeNotifier,
       builder: (context, isDark, child) {
+        final primary = isDark ? const Color(0xFF8A49DF) : Colors.blue.shade700;
+        final panel = isDark ? const Color(0xFF161022) : Colors.white;
+        final textColor = isDark ? Colors.white : Colors.black87;
         return Scaffold(
-          backgroundColor: isDark
-              ? const Color(0xFF0F0C15)
-              : const Color(0xFFF8FAFC),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF1E172B)
-                            : Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? const Color(0xFF8A49DF).withOpacity(0.2)
-                                : Colors.blue.withOpacity(0.08),
-                            blurRadius: 30,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Text(
-                        '🕊️',
-                        style: TextStyle(fontSize: 48),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'زاجل | Zajel',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? const Color(0xFFEADBFF)
-                            : Colors.blue.shade900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'التواصل الأسرع والأكثر أماناً',
-                      style: TextStyle(
-                        color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF161022)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF8A49DF).withOpacity(0.3)
-                              : Colors.blue.shade200,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(
-                              isDark ? 0.2 : 0.03,
-                            ),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.white : Colors.black87,
-                          letterSpacing: 1,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          labelText: 'رقم الهاتف',
-                          labelStyle: TextStyle(
-                            color: isDark
-                                ? const Color(0xFFC79FFF)
-                                : Colors.blue.shade700,
-                            fontSize: 14,
-                          ),
-                          hintText: '+964 770 000 0000',
-                          hintStyle: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 13,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.phone_iphone_rounded,
-                            color: isDark
-                                ? const Color(0xFFC79FFF)
-                                : Colors.blue.shade700,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    Container(
-                      width: double.infinity,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: isDark
-                            ? const LinearGradient(
-                                colors: [
-                                  Color(0xFF8A49DF),
-                                  Color(0xFF5A22A6),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : LinearGradient(
-                                colors: [
-                                  Colors.blue.shade600,
-                                  Colors.blue.shade800,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                (isDark
-                                        ? const Color(0xFF8A49DF)
-                                        : Colors.blue)
-                                    .withOpacity(0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        onPressed: _sendingCode ? null : _sendCode,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_sendingCode) ...[
-                              const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                            ],
-                            Text(
-                              _sendingCode ? 'جارٍ إرسال الرمز...' : 'إرسال رمز التحقق',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 18,
-                              color: Colors.white,
+          backgroundColor: isDark ? const Color(0xFF0F0C15) : const Color(0xFFF8FAFC),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E172B) : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: primary.withOpacity(0.15),
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
+                        child: const Text('🕊️', style: TextStyle(fontSize: 48)),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 24),
+                      Text(
+                        'زاجل | Zajel',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFFEADBFF) : Colors.blue.shade900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'التواصل الأسرع والأكثر أماناً',
+                        style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 13),
+                      ),
+                      const SizedBox(height: 34),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: panel,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: primary.withOpacity(0.25)),
+                        ),
+                        child: TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          autocorrect: false,
+                          textInputAction: TextInputAction.next,
+                          style: TextStyle(fontSize: 15, color: textColor),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            labelText: 'البريد الإلكتروني',
+                            labelStyle: TextStyle(color: primary, fontSize: 14),
+                            hintText: 'name@example.com',
+                            prefixIcon: Icon(Icons.email_outlined, color: primary, size: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: panel,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: primary.withOpacity(0.25)),
+                        ),
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: !_showPassword,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _busy ? null : _submit(),
+                          style: TextStyle(fontSize: 15, color: textColor),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            labelText: 'كلمة المرور',
+                            labelStyle: TextStyle(color: primary, fontSize: 14),
+                            prefixIcon: Icon(Icons.lock_outline_rounded, color: primary, size: 20),
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(() => _showPassword = !_showPassword),
+                              icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility, color: primary),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!_createAccount)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: _busy ? null : _resetPassword,
+                            child: Text('نسيت كلمة المرور؟', style: TextStyle(color: primary)),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 12),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? const [Color(0xFF8A49DF), Color(0xFF5A22A6)]
+                                : [Colors.blue.shade600, Colors.blue.shade800],
+                          ),
+                          boxShadow: [BoxShadow(color: primary.withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                          onPressed: _busy ? null : _submit,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (_busy) ...[
+                                const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                                const SizedBox(width: 10),
+                              ],
+                              Text(
+                                _busy ? 'يرجى الانتظار...' : (_createAccount ? 'إنشاء حساب جديد' : 'تسجيل الدخول'),
+                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: _busy ? null : () => setState(() => _createAccount = !_createAccount),
+                        child: Text(
+                          _createAccount ? 'لديك حساب؟ سجّل الدخول' : 'ما عندك حساب؟ أنشئ حساباً مجانياً',
+                          style: TextStyle(color: isDark ? const Color(0xFFC79FFF) : Colors.blue.shade700, fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
