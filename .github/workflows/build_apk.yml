@@ -62,51 +62,23 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Create temporary Android debug keystore
+      - name: Create Android signing key
         run: |
-          mkdir -p "$HOME/.config/.android"
+          mkdir -p "$HOME/.android"
           keytool -genkeypair -v \
-            -keystore "$HOME/.config/.android/debug.keystore" \
+            -keystore "$HOME/.android/debug.keystore" \
             -storepass android \
-            -alias AndroidDebugKey \
+            -alias androiddebugkey \
             -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Show Android signing fingerprints
-        continue-on-error: true
-        run: |
-          echo "===== ANDROID SHA FINGERPRINTS ====="
-          keytool -list -v \
-            -keystore "$HOME/.config/.android/debug.keystore" \
-            -storepass android \
-            -alias AndroidDebugKey | grep -E "SHA1:|SHA256:"
-
-          echo "===== GRADLE SIGNING REPORT ====="
-          cd android
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-            ./gradlew signingReport
-          else
-            echo "Gradle wrapper not found; fingerprints were not generated."
-          fi
-
       - name: Build APK and save full log
-        id: build_apk
-        continue-on-error: true
         run: |
           set -o pipefail
           flutter build apk --release -v 2>&1 | tee build_log.txt
-
-      - name: Show useful error lines
-        if: steps.build_apk.outcome == 'failure'
-        run: |
-          echo "===== POSSIBLE ROOT CAUSE ====="
-          grep -n -i -E \
-            "what went wrong|error:|exception|requires a higher|v1 embedding|could not|failed|redeclaration" \
-            build_log.txt | tail -80 || true
-          echo "===== LAST 150 LINES ====="
-          tail -150 build_log.txt
 
       - name: Upload diagnostic log
         if: always()
@@ -117,9 +89,49 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Fail if APK build failed
-        if: steps.build_apk.outcome == 'failure'
-        run: exit 1
+      - name: Sign and verify APK
+        run: |
+          set -euo pipefail
+
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Android/Sdk}}"
+
+          test -f "$APK"
+
+          BT="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+
+          test -x "$BT/apksigner"
+          test -x "$BT/zipalign"
+          test -x "$BT/aapt"
+
+          echo "===== APK ZIP CHECK ====="
+          unzip -t "$APK"
+
+          echo "===== PACKAGE INFORMATION ====="
+          "$BT/aapt" dump badging "$APK" | head -n 5
+
+          "$BT/aapt" dump badging "$APK" | grep -q "package: name='com.example.zajel'"
+
+          echo "===== ZIP ALIGN ====="
+          "$BT/zipalign" -f -p 4 "$APK" app-aligned.apk
+
+          echo "===== SIGN APK ====="
+          "$BT/apksigner" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out app-release-signed.apk \
+            app-aligned.apk
+
+          echo "===== VERIFY APK SIGNATURE ====="
+          "$BT/apksigner" verify --verbose --print-certs app-release-signed.apk
+
+          cp app-release-signed.apk "$APK"
+
+          echo "===== FINAL APK ====="
+          ls -lh "$APK"
+          sha256sum "$APK"
 
       - name: Upload APK
         if: success()
