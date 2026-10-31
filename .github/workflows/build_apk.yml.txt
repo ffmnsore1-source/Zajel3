@@ -1,0 +1,131 @@
+
+name: Build Zajel APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Show project files
+        run: |
+          echo "===== ROOT ====="
+          ls -la
+          echo "===== ANDROID ====="
+          ls -la android || true
+          echo "===== ANDROID APP ====="
+          ls -la android/app || true
+
+      - name: Restore Android scaffolding if missing
+        run: |
+          if [ ! -f android/settings.gradle ] && [ ! -f android/settings.gradle.kts ]; then
+            flutter create --platforms=android --org com.example .
+          fi
+
+      - name: Remove duplicate Kotlin MainActivity
+        run: |
+          if [ -f android/app/src/main/java/com/example/zajel/MainActivity.java ]; then
+            if [ -d android/app/src/main/kotlin ]; then
+              find android/app/src/main/kotlin -type f -name "MainActivity.kt" -print -delete
+            fi
+          fi
+
+      - name: Verify MainActivity files
+        run: |
+          echo "===== JAVA ====="
+          find android/app/src/main/java -type f -name "MainActivity.java" -print || true
+          echo "===== KOTLIN ====="
+          find android/app/src/main/kotlin -type f -name "MainActivity.kt" -print || true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Create temporary Android debug keystore
+        run: |
+          mkdir -p "$HOME/.config/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.config/.android/debug.keystore" \
+            -storepass android \
+            -alias AndroidDebugKey \
+            -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Show Android signing fingerprints
+        continue-on-error: true
+        run: |
+          echo "===== ANDROID SHA FINGERPRINTS ====="
+          keytool -list -v \
+            -keystore "$HOME/.config/.android/debug.keystore" \
+            -storepass android \
+            -alias AndroidDebugKey | grep -E "SHA1:|SHA256:"
+
+          echo "===== GRADLE SIGNING REPORT ====="
+          cd android
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew signingReport
+          else
+            echo "Gradle wrapper not found; fingerprints were not generated."
+          fi
+
+      - name: Build APK and save full log
+        id: build_apk
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter build apk --release -v 2>&1 | tee build_log.txt
+
+      - name: Show useful error lines
+        if: steps.build_apk.outcome == 'failure'
+        run: |
+          echo "===== POSSIBLE ROOT CAUSE ====="
+          grep -n -i -E \
+            "what went wrong|error:|exception|requires a higher|v1 embedding|could not|failed|redeclaration" \
+            build_log.txt | tail -80 || true
+          echo "===== LAST 150 LINES ====="
+          tail -150 build_log.txt
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zajel-build-diagnostic
+          path: build_log.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Fail if APK build failed
+        if: steps.build_apk.outcome == 'failure'
+        run: exit 1
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zajel-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
