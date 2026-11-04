@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "816514499753",
+    "project_id": "zajel-messages",
+    "storage_bucket": "zajel-messages.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:816514499753:android:ed378f3d2dfe16dc7195b8",
+        "android_client_info": {
+          "package_name": "com.example.zajel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRtY0MNjFnU4kAPE67YE8EkAjm4CCoQXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
