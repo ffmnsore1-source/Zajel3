@@ -132,6 +132,7 @@ Future<void> _ensureUserProfile(User? user) async {
   });
 }
 
+// Telegram Plus-inspired visual system (Day/Night palette values extracted from Plus 13.1.1.1).
 class ZajelApp extends StatelessWidget {
   const ZajelApp({super.key});
 
@@ -144,11 +145,39 @@ class ZajelApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'زاجل - Zajel',
           theme: ThemeData(
-            primarySwatch: Colors.deepPurple,
-            scaffoldBackgroundColor: isDark
-                ? const Color(0xFF0F0C15)
-                : const Color(0xFFF8FAFC),
             useMaterial3: true,
+            brightness: isDark ? Brightness.dark : Brightness.light,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: isDark ? const Color(0xFF5CC1FF) : const Color(0xFF298ACF),
+              brightness: isDark ? Brightness.dark : Brightness.light,
+              surface: isDark ? const Color(0xFF232326) : Colors.white,
+            ),
+            scaffoldBackgroundColor: isDark ? const Color(0xFF181819) : Colors.white,
+            appBarTheme: AppBarTheme(
+              backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
+              foregroundColor: isDark ? Colors.white : const Color(0xFF333333),
+              elevation: 0,
+              centerTitle: false,
+              titleTextStyle: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF333333),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            dividerColor: isDark ? const Color(0xFF303033) : const Color(0xFFE6E6E6),
+            snackBarTheme: SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: isDark ? const Color(0xFF303033) : const Color(0xFF333333),
+              contentTextStyle: const TextStyle(color: Colors.white),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E1E1F) : const Color(0xFFF4F4F5),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF298ACF), width: 1.2)),
+            ),
           ),
           home: FirebaseAuth.instance.currentUser == null
               ? const LoginScreen()
@@ -295,11 +324,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return ValueListenableBuilder<bool>(
       valueListenable: themeNotifier,
       builder: (context, isDark, child) {
-        final primary = isDark ? const Color(0xFF8A49DF) : Colors.blue.shade700;
-        final panel = isDark ? const Color(0xFF161022) : Colors.white;
+        final primary = isDark ? const Color(0xFF229ED9) : Colors.blue.shade700;
+        final panel = isDark ? const Color(0xFF232326) : Colors.white;
         final textColor = isDark ? Colors.white : Colors.black87;
         return Scaffold(
-          backgroundColor: isDark ? const Color(0xFF0F0C15) : const Color(0xFFF8FAFC),
+          backgroundColor: isDark ? const Color(0xFF181819) : const Color(0xFFFFFFFF),
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -329,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? const Color(0xFFEADBFF) : Colors.blue.shade900,
+                          color: isDark ? const Color(0xFFDAF0FF) : Colors.blue.shade900,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -405,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(20),
                           gradient: LinearGradient(
                             colors: isDark
-                                ? const [Color(0xFF8A49DF), Color(0xFF5A22A6)]
+                                ? const [Color(0xFF229ED9), Color(0xFF1C83B8)]
                                 : [Colors.blue.shade600, Colors.blue.shade800],
                           ),
                           boxShadow: [BoxShadow(color: primary.withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))],
@@ -439,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _busy ? null : () => setState(() => _createAccount = !_createAccount),
                         child: Text(
                           _createAccount ? 'لديك حساب؟ سجّل الدخول' : 'إنشاء حساب',
-                          style: TextStyle(color: isDark ? const Color(0xFFC79FFF) : Colors.blue.shade700, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: isDark ? const Color(0xFF5CC1FF) : Colors.blue.shade700, fontWeight: FontWeight.w600),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -551,11 +580,11 @@ class _OtpVerificationScreenState
       builder: (context, isDark, child) {
         return Scaffold(
           backgroundColor: isDark
-              ? const Color(0xFF0F0C15)
-              : const Color(0xFFF8FAFC),
+              ? const Color(0xFF181819)
+              : const Color(0xFFFFFFFF),
           appBar: AppBar(
             backgroundColor:
-                isDark ? const Color(0xFF161022) : Colors.white,
+                isDark ? const Color(0xFF232326) : Colors.white,
             title: Text(
               'رمز التحقق',
               style: TextStyle(
@@ -585,7 +614,7 @@ class _OtpVerificationScreenState
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: isDark
-                        ? const Color(0xFFEADBFF)
+                        ? const Color(0xFFDAF0FF)
                         : Colors.blue.shade900,
                   ),
                 ),
@@ -606,12 +635,12 @@ class _OtpVerificationScreenState
                       height: 52,
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF161022)
+                            ? const Color(0xFF232326)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF8A49DF).withOpacity(0.5)
+                              ? const Color(0xFF229ED9).withOpacity(0.5)
                               : Colors.blue.shade300,
                           width: 1.5,
                         ),
@@ -658,8 +687,8 @@ class _OtpVerificationScreenState
                     gradient: isDark
                         ? const LinearGradient(
                             colors: [
-                              Color(0xFF8A49DF),
-                              Color(0xFF5A22A6),
+                              Color(0xFF229ED9),
+                              Color(0xFF1C83B8),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -676,7 +705,7 @@ class _OtpVerificationScreenState
                       BoxShadow(
                         color:
                             (isDark
-                                    ? const Color(0xFF8A49DF)
+                                    ? const Color(0xFF229ED9)
                                     : Colors.blue)
                                 .withOpacity(0.3),
                         blurRadius: 12,
@@ -850,7 +879,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'تعديل $title',
@@ -865,10 +894,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: InputDecoration(
             hintText: 'أدخل $title',
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: isDark ? const Color(0xFFC79FFF) : Colors.blue),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF5CC1FF) : Colors.blue),
             ),
             focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: isDark ? const Color(0xFF8A49DF) : Colors.blue, width: 2),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF229ED9) : Colors.blue, width: 2),
             ),
           ),
         ),
@@ -899,7 +928,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('تعديل البريد الإلكتروني', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
         content: TextField(
@@ -949,7 +978,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _editProfileImage() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF161022),
+      backgroundColor: const Color(0xFF232326),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -961,12 +990,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(10))),
               const SizedBox(height: 18),
-              const Text('تعديل الملف الشخصي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEADBFF))),
+              const Text('تعديل الملف الشخصي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFDAF0FF))),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildOptionItem(icon: Icons.photo_library_rounded, color: const Color(0xFFC79FFF), title: 'المعرض', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة معرض جديدة'); }),
+                  _buildOptionItem(icon: Icons.photo_library_rounded, color: const Color(0xFF5CC1FF), title: 'المعرض', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة معرض جديدة'); }),
                   _buildOptionItem(icon: Icons.camera_alt_rounded, color: Colors.blueAccent, title: 'الكاميرا', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'صورة كاميرا جديدة'); }),
                   _buildOptionItem(icon: Icons.delete_outline_rounded, color: Colors.redAccent, title: 'حذف', onTap: () { Navigator.pop(context); setState(() => _profileStatus = 'افتراضي'); }),
                 ],
@@ -997,9 +1026,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       valueListenable: themeNotifier,
       builder: (context, isDark, child) {
         return Scaffold(
-          backgroundColor: isDark ? const Color(0xFF0F0C15) : const Color(0xFFF8FAFC),
+          backgroundColor: isDark ? const Color(0xFF181819) : const Color(0xFFFFFFFF),
           appBar: AppBar(
-            backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+            backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black87, size: 18),
@@ -1021,12 +1050,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: LinearGradient(colors: isDark ? [const Color(0xFF8A49DF), const Color(0xFFC79FFF)] : [Colors.blue.shade400, Colors.blue.shade700]),
+                                gradient: LinearGradient(colors: isDark ? [const Color(0xFF229ED9), const Color(0xFF5CC1FF)] : [Colors.blue.shade400, Colors.blue.shade700]),
                               ),
                               child: CircleAvatar(
                                 radius: 54,
-                                backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
-                                child: Icon(Icons.person, size: 68, color: isDark ? const Color(0xFFEADBFF) : Colors.blue),
+                                backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
+                                child: Icon(Icons.person, size: 68, color: isDark ? const Color(0xFFDAF0FF) : Colors.blue),
                               ),
                             ),
                             Positioned(
@@ -1036,7 +1065,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: _editProfileImage,
                                 child: CircleAvatar(
                                   radius: 18,
-                                  backgroundColor: isDark ? const Color(0xFF8A49DF) : Colors.blue,
+                                  backgroundColor: isDark ? const Color(0xFF229ED9) : Colors.blue,
                                   child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
                                 ),
                               ),
@@ -1048,11 +1077,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Flexible(child: Text(_profileStatus, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFFC79FFF) : Colors.blue.shade700, fontWeight: FontWeight.w600))),
+                          Flexible(child: Text(_profileStatus, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF5CC1FF) : Colors.blue.shade700, fontWeight: FontWeight.w600))),
                           IconButton(
                             tooltip: 'تعديل الحالة الشخصية',
                             visualDensity: VisualDensity.compact,
-                            icon: Icon(Icons.edit_outlined, size: 16, color: isDark ? const Color(0xFFC79FFF) : Colors.blue),
+                            icon: Icon(Icons.edit_outlined, size: 16, color: isDark ? const Color(0xFF5CC1FF) : Colors.blue),
                             onPressed: () => _editTextField(title: 'الحالة الشخصية', currentValue: _profileStatus, fieldKey: 'status', onUpdated: (value) => setState(() => _profileStatus = value)),
                           ),
                         ],
@@ -1082,7 +1111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildModernProfileCard({required bool isDark, required IconData icon, required String title, required String value, required VoidCallback onEdit}) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161022) : Colors.white,
+        color: isDark ? const Color(0xFF232326) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white.withOpacity(0.04) : Colors.blue.shade100),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 8, offset: const Offset(0, 2))],
@@ -1093,14 +1122,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: isDark ? const Color(0xFF221A30) : Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: isDark ? const Color(0xFFEADBFF) : Colors.blue, size: 20),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1F) : Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: isDark ? const Color(0xFFDAF0FF) : Colors.blue, size: 20),
           ),
           title: Text(title, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
           subtitle: Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
           trailing: IconButton(
             tooltip: 'تعديل $title',
-            icon: Icon(Icons.edit_outlined, size: 18, color: isDark ? const Color(0xFFC79FFF) : Colors.blue),
+            icon: Icon(Icons.edit_outlined, size: 18, color: isDark ? const Color(0xFF5CC1FF) : Colors.blue),
             onPressed: onEdit,
           ),
         ),
@@ -1119,11 +1148,11 @@ class SettingsScreen extends StatelessWidget {
       builder: (context, isDark, child) {
         return Scaffold(
           backgroundColor: isDark
-              ? const Color(0xFF0F0C15)
-              : const Color(0xFFF8FAFC),
+              ? const Color(0xFF181819)
+              : const Color(0xFFFFFFFF),
           appBar: AppBar(
             backgroundColor:
-                isDark ? const Color(0xFF161022) : Colors.white,
+                isDark ? const Color(0xFF232326) : Colors.white,
             elevation: 0,
             leading: IconButton(
               icon: Icon(
@@ -1154,7 +1183,7 @@ class SettingsScreen extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: isDark
-                        ? const Color(0xFFC79FFF)
+                        ? const Color(0xFF5CC1FF)
                         : Colors.blue.shade800,
                   ),
                 ),
@@ -1162,7 +1191,7 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF161022)
+                        ? const Color(0xFF232326)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
@@ -1214,7 +1243,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           value: isDark,
                           activeColor:
-                              const Color(0xFF8A49DF),
+                              const Color(0xFF229ED9),
                           onChanged: (val) {
                             themeNotifier.toggleTheme(val);
                           },
@@ -1517,7 +1546,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         'time': _chatTime(data['updatedAt']),
         'unread': 0,
         'isOnline': false,
-        'avatarColor': const Color(0xFF8A49DF),
+        'avatarColor': const Color(0xFF229ED9),
       });
     }
     if (mounted) setState(() { _chats = chats; _loadingChats = false; _chatError = null; });
@@ -1564,7 +1593,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF21182D) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: const Color(0xFFC79FFF).withOpacity(.22)),
+          border: Border.all(color: const Color(0xFF5CC1FF).withOpacity(.22)),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 38, height: 4, decoration: BoxDecoration(color: Colors.grey.withOpacity(.5), borderRadius: BorderRadius.circular(4))),
@@ -1585,7 +1614,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final dark = themeNotifier.value;
     return ListTile(
       dense: true,
-      leading: Icon(icon, color: const Color(0xFFC79FFF)),
+      leading: Icon(icon, color: const Color(0xFF5CC1FF)),
       title: Text(title, style: TextStyle(color: dark ? Colors.white : Colors.black87, fontSize: 14)),
       onTap: () { Navigator.pop(sheetContext); action(); },
     );
@@ -1675,7 +1704,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           }
 
           return Dialog(
-            backgroundColor: isDark ? const Color(0xFF161022) : Colors.white,
+            backgroundColor: isDark ? const Color(0xFF232326) : Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -1693,10 +1722,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         width: 42,
                         height: 42,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8A49DF).withOpacity(.16),
+                          color: const Color(0xFF229ED9).withOpacity(.16),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.search_rounded, color: Color(0xFF8A49DF)),
+                        child: const Icon(Icons.search_rounded, color: Color(0xFF229ED9)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(child: Column(
@@ -1737,7 +1766,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           ],
                         ),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF221A30) : const Color(0xFFF1F5F9),
+                        fillColor: isDark ? const Color(0xFF1E1E1F) : const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                     ),
@@ -1762,7 +1791,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 return ListTile(
                                   dense: true,
                                   contentPadding: EdgeInsets.zero,
-                                  leading: CircleAvatar(radius: 17, backgroundColor: const Color(0xFF8A49DF).withOpacity(.16), child: const Icon(Icons.person_outline_rounded, color: Color(0xFF8A49DF), size: 19)),
+                                  leading: CircleAvatar(radius: 17, backgroundColor: const Color(0xFF229ED9).withOpacity(.16), child: const Icon(Icons.person_outline_rounded, color: Color(0xFF229ED9), size: 19)),
                                   title: Text('@$handle', textDirection: TextDirection.ltr, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
                                   trailing: Icon(Icons.north_west_rounded, size: 17, color: isDark ? Colors.white54 : Colors.black45),
                                   onTap: busy ? null : () { controller.text = handle; submit(handle); },
@@ -1842,7 +1871,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark
-            ? const Color(0xFF161022)
+            ? const Color(0xFF232326)
             : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -1893,7 +1922,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ),
                       side: BorderSide(
                         color: isDark
-                            ? const Color(0xFF8A49DF)
+                            ? const Color(0xFF229ED9)
                             : Colors.blue,
                       ),
                     ),
@@ -1949,6 +1978,58 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  Widget _buildPlusDrawer(bool isDark) {
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email ?? 'حساب زاجل';
+    final initial = email.isNotEmpty ? email[0].toUpperCase() : 'Z';
+    final bg = isDark ? const Color(0xFF232326) : Colors.white;
+    final fg = isDark ? Colors.white : const Color(0xFF333333);
+    final muted = isDark ? const Color(0xFF9A9A9A) : const Color(0xFF79817E);
+    Widget entry(IconData icon, String label, VoidCallback action, {Color? color}) {
+      return ListTile(
+        dense: true,
+        minLeadingWidth: 28,
+        leading: Icon(icon, color: color ?? (isDark ? const Color(0xFFB7DFFF) : const Color(0xFF404E56)), size: 22),
+        title: Text(label, style: TextStyle(color: color ?? fg, fontSize: 14, fontWeight: FontWeight.w500)),
+        onTap: action,
+      );
+    }
+    return Drawer(
+      width: 310,
+      backgroundColor: bg,
+      child: SafeArea(
+        child: Column(children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF229ED9), Color(0xFF1C83B8)]),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              CircleAvatar(radius: 29, backgroundColor: Colors.white.withOpacity(.22), child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 13),
+              Text(email, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              const Text('زاجل • تواصل أسرع', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            ]),
+          ),
+          Expanded(child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
+            entry(Icons.person_outline_rounded, 'الملف الشخصي', () { Navigator.pop(context); Navigator.push(context, _smoothRoute(const ProfileScreen())); }),
+            entry(Icons.chat_bubble_outline_rounded, 'كل المحادثات', () { Navigator.pop(context); setState(() => _activeChatTab = 'all'); }),
+            entry(Icons.archive_outlined, 'الأرشيف', () { Navigator.pop(context); setState(() => _activeChatTab = 'archive'); }),
+            entry(Icons.push_pin_outlined, 'المفضلة والمثبتة', () { Navigator.pop(context); setState(() => _activeChatTab = 'favorites'); }),
+            Divider(color: isDark ? const Color(0xFF303033) : const Color(0xFFE6E6E6), height: 14),
+            entry(Icons.settings_outlined, 'الإعدادات', () { Navigator.pop(context); Navigator.push(context, _smoothRoute(const SettingsScreen())); }),
+            entry(Icons.nightlight_round, isDark ? 'الوضع النهاري' : 'الوضع الليلي', () { Navigator.pop(context); themeNotifier.toggleTheme(!isDark); }),
+            entry(Icons.logout_rounded, 'تسجيل الخروج', () { Navigator.pop(context); _showLogoutDialog(context, isDark); }, color: Colors.redAccent),
+          ])),
+          Divider(height: 1, color: isDark ? const Color(0xFF303033) : const Color(0xFFE6E6E6)),
+          Padding(padding: const EdgeInsets.all(13), child: Text('Zajel • Plus-inspired interface', style: TextStyle(color: muted, fontSize: 10))),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredChats = _chats.where((chat) {
@@ -1959,796 +2040,217 @@ class _ChatListScreenState extends State<ChatListScreen> {
       if (hidden || (_activeChatTab != 'archive' && archived) || (_activeChatTab == 'archive' && !archived)) return false;
       if (_activeChatTab == 'favorites' && pref['pinned'] != true) return false;
       if (_activeChatTab == 'unread' && pref['markedUnread'] != true) return false;
-      if (_activeChatTab == 'groups') return false; // Group conversations are not supported by the current data model.
+      if (_activeChatTab == 'groups') return false;
       final name = chat['name'].toString().toLowerCase();
       final message = chat['lastMessage'].toString().toLowerCase();
       return name.contains(_searchQuery) || message.contains(_searchQuery);
-    }).toList()
-      ..sort((a, b) {
-        final ap = _chatPreferences[a['conversationId']]?['pinned'] == true;
-        final bp = _chatPreferences[b['conversationId']]?['pinned'] == true;
-        if (ap != bp) return ap ? -1 : 1;
-        return 0;
-      });
+    }).toList()..sort((a, b) {
+      final ap = _chatPreferences[a['conversationId']]?['pinned'] == true;
+      final bp = _chatPreferences[b['conversationId']]?['pinned'] == true;
+      if (ap != bp) return ap ? -1 : 1;
+      return 0;
+    });
 
     return ValueListenableBuilder<bool>(
       valueListenable: themeNotifier,
       builder: (context, isDark, child) {
+        final background = isDark ? const Color(0xFF181819) : Colors.white;
+        final surface = isDark ? const Color(0xFF232326) : Colors.white;
+        final textColor = isDark ? Colors.white : const Color(0xFF333333);
+        final muted = isDark ? const Color(0xFF8A8A8A) : const Color(0xFF79817E);
+        final accent = isDark ? const Color(0xFF5CC1FF) : const Color(0xFF298ACF);
         return Scaffold(
-          backgroundColor: isDark
-              ? const Color(0xFF0F0C15)
-              : const Color(0xFFF8FAFC),
+          backgroundColor: background,
+          drawer: _buildPlusDrawer(isDark),
           appBar: AppBar(
-            backgroundColor:
-                isDark ? const Color(0xFF161022) : Colors.white,
+            backgroundColor: surface,
             elevation: 0,
-            title: Text(
-              'المحادثات | Zajel',
-              style: TextStyle(
-                color: isDark
-                    ? Colors.white
-                    : Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+            titleSpacing: 0,
+            leading: Builder(builder: (ctx) => IconButton(
+              tooltip: 'القائمة الجانبية',
+              icon: const Icon(Icons.menu_rounded, size: 25),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            )),
+            title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text('زاجل', style: TextStyle(color: textColor, fontSize: 19, fontWeight: FontWeight.w700)),
+              Text(_activeChatTab == 'archive' ? 'الأرشيف' : 'المحادثات', style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w400)),
+            ]),
             actions: [
-              Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.blue.shade50,
-                  borderRadius:
-                      BorderRadius.circular(12),
-                ),
-                child: PopupMenuButton<String>(
-                  color: isDark
-                      ? const Color(0xFF161022)
-                      : Colors.white,
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    color: isDark
-                        ? Colors.white
-                        : Colors.black87,
-                    size: 20,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
-                  ),
-                  onSelected: (value) {
-                    if (value == 'profile') {
-                      Navigator.push(
-                        context,
-                        _smoothRoute(
-                          const ProfileScreen(),
-                        ),
-                      );
-                    } else if (value == 'settings') {
-                      Navigator.push(
-                        context,
-                        _smoothRoute(
-                          const SettingsScreen(),
-                        ),
-                      );
-                    } else if (value == 'logout') {
-                      _showLogoutDialog(
-                        context,
-                        isDark,
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            color: isDark
-                                ? const Color(0xFFEADBFF)
-                                : Colors.blue,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'الملف الشخصي',
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.black87,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'settings',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.settings_outlined,
-                            color: isDark
-                                ? const Color(0xFFEADBFF)
-                                : Colors.blue,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'الإعدادات',
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.black87,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.logout_rounded,
-                            color: Colors.redAccent,
-                            size: 18,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            'تسجيل الخروج',
-                            style: TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton:
-              FloatingActionButton(
-            backgroundColor: isDark
-                ? const Color(0xFF8A49DF)
-                : Colors.blue,
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            tooltip: 'إضافة محادثة',
-            onPressed: () => _showSearchInterface(isDark),
-            child: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          body: Stack(
-            children: [
-              if (!isDark)
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: BirdPatternPainter(),
-                  ),
-                ),
-              Column(
-                children: [
-                  Container(
-                    color: isDark
-                        ? const Color(0xFF161022)
-                        : Colors.white,
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 14,
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(22),
-                      onTap: () => _showSearchInterface(isDark),
-                      child: Container(
-                      height: 44,
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF221A30)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius:
-                            BorderRadius.circular(22),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white
-                                  .withOpacity(0.04)
-                              : Colors.transparent,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.search_rounded,
-                            color: isDark
-                                ? Colors.white70
-                                : Colors.blue.shade700,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              focusNode: _searchFocusNode,
-                              readOnly: true,
-                              showCursor: false,
-                              enableInteractiveSelection: false,
-                              onTap: () => _showSearchInterface(isDark),
-                              style: TextStyle(
-                                color: isDark
-                                    ? Colors.white
-                                    : Colors.black87,
-                                fontSize: 13,
-                              ),
-                              decoration:
-                                  InputDecoration(
-                                hintText:
-                                    'ابحث عن مستخدم أو محادثة...',
-                                hintStyle: TextStyle(
-                                  color:
-                                      Colors.grey.shade500,
-                                  fontSize: 13,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                          if (_searchingUser)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          else if (_searchQuery.isNotEmpty)
-                            GestureDetector(
-                              onTap: () =>
-                                  _searchController
-                                      .clear(),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: isDark
-                                    ? Colors.white70
-                                    : Colors.black54,
-                                size: 16,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 85,
-                            child: ListView(
-                              scrollDirection:
-                                  Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              children: [
-                                _buildStoryAvatar(
-                                  'قصتك',
-                                  '🕊',
-                                  isDark
-                                      ? const Color(
-                                          0xFF8A49DF)
-                                      : Colors.blue,
-                                  isAdd: true,
-                                  isDark: isDark,
-                                ),
-                                _buildStoryAvatar(
-                                  'أحمد',
-                                  '👨',
-                                  isDark
-                                      ? const Color(
-                                          0xFF9E5DF8)
-                                      : Colors.blueAccent,
-                                  isDark: isDark,
-                                ),
-                                _buildStoryAvatar(
-                                  'زاجل',
-                                  '🕊',
-                                  isDark
-                                      ? const Color(
-                                          0xFF8A49DF)
-                                      : Colors.indigo,
-                                  isDark: isDark,
-                                ),
-                                _buildStoryAvatar(
-                                  'سارة',
-                                  '👩',
-                                  isDark
-                                      ? const Color(
-                                          0xFFC79FFF)
-                                      : Colors.blue,
-                                  isDark: isDark,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 6,
-                            ),
-                            child: Text(
-                              'الرسائل الأخيرة',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight:
-                                    FontWeight.bold,
-                                color:
-                                    Colors.grey.shade500,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(children: [
-                                _buildChatTab('all', 'الكل', Icons.chat_bubble_outline),
-                                _buildChatTab('unread', 'غير المقروءة', Icons.mark_chat_unread_outlined),
-                                _buildChatTab('favorites', 'المفضلة', Icons.push_pin_outlined),
-                                _buildChatTab('archive', 'الأرشيف', Icons.archive_outlined),
-                              ]),
-                            ),
-                          ),
-                          if (_selectedChatIds.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF21182D) : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFC79FFF).withOpacity(.35)),
-                              ),
-                              child: Row(children: [
-                                Text('${_selectedChatIds.length} محددة', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
-                                const Spacer(),
-                                IconButton(tooltip: 'أرشفة', onPressed: () => _applyBulkPreference('archived', true), icon: const Icon(Icons.archive_outlined, color: Color(0xFFC79FFF))),
-                                IconButton(tooltip: 'كتم', onPressed: () => _applyBulkPreference('muted', true), icon: const Icon(Icons.volume_off_outlined, color: Color(0xFFC79FFF))),
-                                IconButton(tooltip: 'تثبيت', onPressed: () => _applyBulkPreference('pinned', true), icon: const Icon(Icons.push_pin_outlined, color: Color(0xFFC79FFF))),
-                                IconButton(tooltip: 'إلغاء', onPressed: () => setState(() => _selectedChatIds.clear()), icon: const Icon(Icons.close_rounded)),
-                              ]),
-                            ),
-                          _loadingChats
-                              ? const Padding(
-                                  padding: EdgeInsets.all(30),
-                                  child: Center(child: CircularProgressIndicator()),
-                                )
-                              : _chatError != null
-                                  ? Padding(
-                                      padding: const EdgeInsets.all(20),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Text('تعذّر تحميل المحادثات. فحصنا الآن قراءة وثيقة محادثة بشكل منفصل حتى نحدد هل الرفض من قراءة الوثيقة أم من استعلام القائمة.', textAlign: TextAlign.center, style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-                                          const SizedBox(height: 10),
-                                          SelectableText(_chatError ?? '', textAlign: TextAlign.left, style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 11)),
-                                          const SizedBox(height: 12),
-                                          OutlinedButton.icon(
-                                            onPressed: _loadingChats ? null : _runConversationReadDiagnostic,
-                                            icon: const Icon(Icons.fact_check_outlined),
-                                            label: const Text('فحص قراءة وثيقة المحادثة'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          OutlinedButton.icon(
-                                            onPressed: _loadingChats ? null : _runAllFirestoreDiagnostics,
-                                            icon: const Icon(Icons.fact_check_outlined),
-                                            label: const Text('تشغيل جميع اختبارات Firestore'),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  : filteredChats.isEmpty
-                                      ? Padding(
-                                          padding: const EdgeInsets.all(30.0),
-                                          child: Center(
-                                            child: Text(
-                                              _searchQuery.isEmpty ? 'لا توجد محادثات بعد. اضغط إضافة محادثة للبحث عن شخص.' : 'لا توجد نتائج مطابقة',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(color: Colors.grey, fontSize: 13),
-                                            ),
-                                          ),
-                                        )
-                                      : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics:
-                                      const NeverScrollableScrollPhysics(),
-                                  itemCount:
-                                      filteredChats.length,
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                  ),
-                                  itemBuilder:
-                                      (context, index) {
-                                    final chat =
-                                        filteredChats[index];
-
-                                    return Container(
-                                      margin:
-                                          const EdgeInsets.only(
-                                        bottom: 8,
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      decoration:
-                                          BoxDecoration(
-                                        color: isDark
-                                            ? const Color(
-                                                0xFF161022)
-                                            : Colors.white,
-                                        borderRadius:
-                                            BorderRadius
-                                                .circular(16),
-                                        border:
-                                            Border.all(
-                                          color: isDark
-                                              ? Colors
-                                                  .transparent
-                                              : Colors
-                                                  .grey
-                                                  .shade200,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors
-                                                .black
-                                                .withOpacity(
-                                              isDark
-                                                  ? 0.15
-                                                  : 0.02,
-                                            ),
-                                            blurRadius: 6,
-                                            offset:
-                                                const Offset(
-                                              0,
-                                              2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onLongPress: () => _showChatActions(chat),
-                                          onTap: () {
-                                            final selectedId = chat['conversationId'] as String;
-                                            if (_selectedChatIds.isNotEmpty) {
-                                              setState(() {
-                                                if (!_selectedChatIds.add(selectedId)) _selectedChatIds.remove(selectedId);
-                                              });
-                                              return;
-                                            }
-                                            Navigator.push(
-                                              context,
-                                              _smoothRoute(
-                                                ChatScreen(
-                                                  conversationId: chat['conversationId'],
-                                                  peerUid: chat['peerUid'],
-                                                  peerUsername: chat['username'],
-                                                  userName: chat['name'],
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: Padding(
-                                            padding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                              horizontal: 12,
-                                              vertical: 10,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Stack(
-                                                  children: [
-                                                    CircleAvatar(
-                                                      radius: 24,
-                                                      backgroundColor:
-                                                          (chat['avatarColor']
-                                                                  as Color)
-                                                              .withOpacity(
-                                                        0.2,
-                                                      ),
-                                                      child: Text(
-                                                        chat['name']
-                                                            [0],
-                                                        style:
-                                                            TextStyle(
-                                                          color: chat[
-                                                              'avatarColor'],
-                                                          fontWeight:
-                                                              FontWeight
-                                                                  .bold,
-                                                          fontSize: 16,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    if (chat[
-                                                        'isOnline'])
-                                                      Positioned(
-                                                        bottom: 1,
-                                                        right: 1,
-                                                        child:
-                                                            Container(
-                                                          width: 10,
-                                                          height: 10,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: Colors
-                                                                .greenAccent,
-                                                            shape: BoxShape
-                                                                .circle,
-                                                            border:
-                                                                Border.all(
-                                                              color: isDark
-                                                                  ? const Color(
-                                                                      0xFF161022)
-                                                                  : Colors
-                                                                      .white,
-                                                              width: 2,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        chat['name'],
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight
-                                                                  .bold,
-                                                          fontSize: 14,
-                                                          color: isDark
-                                                              ? Colors.white
-                                                              : Colors
-                                                                  .black87,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(
-                                                          height: 3),
-                                                      Text(
-                                                        chat['lastMessage'],
-                                                        maxLines: 1,
-                                                        overflow:
-                                                            TextOverflow
-                                                                .ellipsis,
-                                                        style: TextStyle(
-                                                          color: chat[
-                                                                      'unread'] >
-                                                                  0
-                                                              ? (isDark
-                                                                  ? Colors
-                                                                      .white
-                                                                  : Colors
-                                                                      .blue
-                                                                      .shade900)
-                                                              : Colors.grey
-                                                                  .shade500,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .end,
-                                                  children: [
-                                                    if (_selectedChatIds.contains(chat['conversationId']))
-                                                      const Icon(Icons.check_circle, color: Color(0xFFC79FFF), size: 16)
-                                                    else if (_chatPreferences[chat['conversationId']]?['pinned'] == true)
-                                                      const Icon(Icons.push_pin, color: Color(0xFFC79FFF), size: 14),
-                                                    Text(
-                                                      chat['time'],
-                                                      style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: chat[
-                                                                    'unread'] >
-                                                                0
-                                                            ? (isDark
-                                                                ? const Color(
-                                                                    0xFFEADBFF)
-                                                                : Colors
-                                                                    .blue)
-                                                            : Colors.grey,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 4,
-                                                    ),
-                                                    if (chat[
-                                                            'unread'] >
-                                                        0)
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(5),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: isDark
-                                                              ? const Color(
-                                                                  0xFF8A49DF)
-                                                              : Colors
-                                                                  .blue,
-                                                          shape: BoxShape
-                                                              .circle,
-                                                        ),
-                                                        child: Text(
-                                                          '${chat['unread']}',
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors
-                                                                .white,
-                                                            fontSize: 9,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ],
-                      ),
-                    ),
-                  ),
+              IconButton(tooltip: 'بحث', onPressed: () => _showSearchInterface(isDark), icon: Icon(Icons.search_rounded, color: isDark ? Colors.white : const Color(0xFF404E56))),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white : const Color(0xFF404E56)),
+                color: surface,
+                onSelected: (value) {
+                  if (value == 'profile') Navigator.push(context, _smoothRoute(const ProfileScreen()));
+                  if (value == 'settings') Navigator.push(context, _smoothRoute(const SettingsScreen()));
+                  if (value == 'theme') themeNotifier.toggleTheme(!isDark);
+                  if (value == 'logout') _showLogoutDialog(context, isDark);
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'profile', child: Text('الملف الشخصي')),
+                  PopupMenuItem(value: 'settings', child: Text('الإعدادات')),
+                  PopupMenuItem(value: 'theme', child: Text('تبديل المظهر')),
+                  PopupMenuItem(value: 'logout', child: Text('تسجيل الخروج')),
                 ],
               ),
             ],
           ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: const Color(0xFF229ED9),
+            foregroundColor: Colors.white,
+            elevation: 3,
+            shape: const CircleBorder(),
+            tooltip: 'محادثة جديدة',
+            onPressed: () => _showSearchInterface(isDark),
+            child: const Icon(Icons.edit_rounded, size: 23),
+          ),
+          body: Column(children: [
+            Container(
+              color: surface,
+              padding: const EdgeInsets.fromLTRB(14, 2, 14, 10),
+              child: Material(
+                color: isDark ? const Color(0xFF1E1E1F) : const Color(0xFFF2F2F2),
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => _showSearchInterface(isDark),
+                  child: SizedBox(height: 42, child: Row(children: [
+                    const SizedBox(width: 12),
+                    Icon(Icons.search_rounded, color: muted, size: 20),
+                    const SizedBox(width: 9),
+                    Expanded(child: Text('بحث عن أشخاص أو رسائل', style: TextStyle(color: muted, fontSize: 13))),
+                    const SizedBox(width: 12),
+                  ])),
+                ),
+              ),
+            ),
+            Container(
+              height: 48,
+              color: surface,
+              child: Row(children: [
+                _plusTab('all', 'الكل', Icons.chat_bubble_outline_rounded, accent, muted),
+                _plusTab('unread', 'غير المقروءة', Icons.mark_chat_unread_outlined, accent, muted),
+                _plusTab('favorites', 'المثبتة', Icons.push_pin_outlined, accent, muted),
+                _plusTab('archive', 'الأرشيف', Icons.archive_outlined, accent, muted),
+              ]),
+            ),
+            Divider(height: 1, thickness: .7, color: isDark ? const Color(0xFF303033) : const Color(0xFFE6E6E6)),
+            if (_selectedChatIds.isNotEmpty)
+              Container(
+                color: surface,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(children: [
+                  Text('${_selectedChatIds.length} محددة', style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  IconButton(tooltip: 'أرشفة', onPressed: () => _applyBulkPreference('archived', true), icon: Icon(Icons.archive_outlined, color: accent)),
+                  IconButton(tooltip: 'كتم', onPressed: () => _applyBulkPreference('muted', true), icon: Icon(Icons.volume_off_outlined, color: accent)),
+                  IconButton(tooltip: 'تثبيت', onPressed: () => _applyBulkPreference('pinned', true), icon: Icon(Icons.push_pin_outlined, color: accent)),
+                  IconButton(tooltip: 'إلغاء', onPressed: () => setState(() => _selectedChatIds.clear()), icon: Icon(Icons.close, color: muted)),
+                ]),
+              ),
+            Expanded(child: _loadingChats
+              ? Center(child: CircularProgressIndicator(color: accent, strokeWidth: 2.5))
+              : _chatError != null
+                ? SingleChildScrollView(padding: const EdgeInsets.all(18), child: Column(children: [
+                    const SizedBox(height: 18),
+                    Icon(Icons.cloud_off_outlined, size: 42, color: Colors.redAccent.withOpacity(.85)),
+                    const SizedBox(height: 12),
+                    Text('تعذّر تحميل المحادثات', style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Text(_chatError!, textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 11, height: 1.5)),
+                    const SizedBox(height: 14),
+                    FilledButton.icon(onPressed: _loadingChats ? null : _runAllFirestoreDiagnostics, icon: const Icon(Icons.health_and_safety_outlined), label: const Text('تشغيل فحص Firestore الشامل')),
+                    TextButton(onPressed: () => setState(() { _chatError = null; _loadingChats = true; }), child: const Text('إعادة المحاولة')),
+                  ]))
+                : filteredChats.isEmpty
+                  ? Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(_activeChatTab == 'archive' ? Icons.archive_outlined : Icons.forum_outlined, size: 46, color: muted),
+                      const SizedBox(height: 12),
+                      Text(_activeChatTab == 'archive' ? 'الأرشيف فارغ' : 'لا توجد محادثات بعد', style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15)),
+                      const SizedBox(height: 6),
+                      Text('ابدأ محادثة جديدة باستخدام زر الكتابة', style: TextStyle(color: muted, fontSize: 12)),
+                    ])))
+                  : ListView.separated(
+                      padding: const EdgeInsets.only(top: 2, bottom: 88),
+                      itemCount: filteredChats.length,
+                      separatorBuilder: (_, __) => Divider(height: 1, indent: 78, endIndent: 8, color: isDark ? const Color(0xFF303033) : const Color(0xFFE6E6E6)),
+                      itemBuilder: (context, index) {
+                        final chat = filteredChats[index];
+                        final id = chat['conversationId'] as String;
+                        final pref = _chatPreferences[id] ?? const <String, dynamic>{};
+                        final name = chat['name']?.toString() ?? 'مستخدم زاجل';
+                        final avatarColor = (chat['avatarColor'] as Color?) ?? accent;
+                        final selected = _selectedChatIds.contains(id);
+                        final markedUnread = pref['markedUnread'] == true;
+                        return Material(
+                          color: selected ? accent.withOpacity(.12) : background,
+                          child: InkWell(
+                            onLongPress: () => _showChatActions(chat),
+                            onTap: () {
+                              if (_selectedChatIds.isNotEmpty) {
+                                setState(() { if (! _selectedChatIds.add(id)) _selectedChatIds.remove(id); });
+                                return;
+                              }
+                              _zajelLastOpenedConversationId = id;
+                              Navigator.push(context, _smoothRoute(ChatScreen(
+                                conversationId: id,
+                                peerUid: chat['peerUid'],
+                                peerUsername: chat['username'],
+                                userName: name,
+                              )));
+                            },
+                            child: SizedBox(height: 76, child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                              child: Row(children: [
+                                Stack(children: [
+                                  CircleAvatar(radius: 27, backgroundColor: avatarColor.withOpacity(.18), child: selected ? Icon(Icons.check, color: accent, size: 25) : Text(name.isNotEmpty ? name.substring(0, 1) : 'ز', style: TextStyle(color: avatarColor, fontSize: 20, fontWeight: FontWeight.w600))),
+                                  if (chat['isOnline'] == true) Positioned(bottom: 0, right: 0, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: const Color(0xFF4BC36A), shape: BoxShape.circle, border: Border.all(color: background, width: 2)))),
+                                ]),
+                                const SizedBox(width: 12),
+                                Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                  Row(children: [
+                                    Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w600))),
+                                    if (pref['pinned'] == true) Padding(padding: const EdgeInsetsDirectional.only(start: 5), child: Icon(Icons.push_pin_rounded, size: 13, color: muted)),
+                                    if (pref['muted'] == true) Padding(padding: const EdgeInsetsDirectional.only(start: 4), child: Icon(Icons.volume_off_rounded, size: 14, color: muted)),
+                                  ]),
+                                  const SizedBox(height: 5),
+                                  Text(chat['lastMessage']?.toString() ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: muted, fontSize: 12.5)),
+                                ])),
+                                const SizedBox(width: 8),
+                                SizedBox(width: 55, child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                                  Text(chat['time']?.toString() ?? '', style: TextStyle(color: markedUnread ? accent : muted, fontSize: 10.5)),
+                                  const SizedBox(height: 7),
+                                  if (markedUnread) Container(minWidth: 19, height: 19, padding: const EdgeInsets.symmetric(horizontal: 5), alignment: Alignment.center, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.mark_chat_unread_rounded, color: Colors.white, size: 11)),
+                                ])),
+                              ]),
+                            )),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ]),
         );
       },
     );
   }
 
-  Widget _buildChatTab(String id, String label, IconData icon) {
+  Widget _plusTab(String id, String label, IconData icon, Color accent, Color muted) {
     final selected = _activeChatTab == id;
-    final dark = themeNotifier.value;
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 7),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => setState(() => _activeChatTab = id),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            gradient: selected ? const LinearGradient(colors: [Color(0xFF8A49DF), Color(0xFF5A22A6)]) : null,
-            color: selected ? null : (dark ? const Color(0xFF21182D) : Colors.white.withOpacity(.9)),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? const Color(0xFFC79FFF) : const Color(0xFFC79FFF).withOpacity(.18)),
-            boxShadow: selected ? [BoxShadow(color: const Color(0xFF8A49DF).withOpacity(.18), blurRadius: 10, offset: const Offset(0, 3))] : const [],
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 16, color: selected ? Colors.white : (dark ? const Color(0xFFC79FFF) : Colors.deepPurple)),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : (dark ? Colors.white70 : Colors.black87))),
-          ]),
-        ),
+    return Expanded(child: InkWell(
+      onTap: () => setState(() => _activeChatTab = id),
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: selected ? accent : Colors.transparent, width: 2.5))),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, size: 15, color: selected ? accent : muted),
+          const SizedBox(width: 5),
+          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: selected ? accent : muted, fontSize: 11.5, fontWeight: selected ? FontWeight.w700 : FontWeight.w500))),
+        ]),
       ),
-    );
+    ));
   }
 
-  Widget _buildStoryAvatar(
-    String name,
-    String emoji,
-    Color color, {
-    bool isAdd = false,
-    required bool isDark,
-  }) {
-    return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: color,
-                    width: 2,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor:
-                      color.withOpacity(0.2),
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-              if (isAdd)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: CircleAvatar(
-                    radius: 8,
-                    backgroundColor: isDark
-                        ? const Color(0xFF8A49DF)
-                        : Colors.blue,
-                    child: const Icon(
-                      Icons.add,
-                      size: 10,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: 10,
-              color: isDark
-                  ? Colors.white70
-                  : Colors.grey.shade700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class BirdPatternPainter extends CustomPainter {
@@ -2929,7 +2431,7 @@ class _ChatScreenState extends State<ChatScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark
-          ? const Color(0xFF161022)
+          ? const Color(0xFF232326)
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -2961,7 +2463,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: isDark
-                      ? const Color(0xFFEADBFF)
+                      ? const Color(0xFFDAF0FF)
                       : Colors.blue.shade900,
                 ),
               ),
@@ -3279,14 +2781,14 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, isDark, child) {
         return Scaffold(
           backgroundColor: isDark
-              ? const Color(0xFF0F0C15)
-              : const Color(0xFFF8FAFC),
+              ? const Color(0xFF0F0F10)
+              : const Color(0xFFFFFFFF),
           appBar: PreferredSize(
             preferredSize:
                 const Size.fromHeight(60),
             child: AppBar(
               backgroundColor: isDark
-                  ? const Color(0xFF161022)
+                  ? const Color(0xFF232326)
                   : Colors.white,
               elevation: 0,
               leading: Container(
@@ -3315,13 +2817,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: isDark
-                        ? const Color(0xFF221A30)
+                        ? const Color(0xFF1E1E1F)
                         : Colors.blue.shade100,
                     child: Text(
                       widget.userName[0],
                       style: TextStyle(
                         color: isDark
-                            ? const Color(0xFFEADBFF)
+                            ? const Color(0xFFDAF0FF)
                             : Colors.blue,
                         fontWeight:
                             FontWeight.bold,
@@ -3370,7 +2872,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     icon: Icon(
                       Icons.videocam_rounded,
                       color: isDark
-                          ? const Color(0xFFC79FFF)
+                          ? const Color(0xFF5CC1FF)
                           : Colors.blue,
                       size: 18,
                     ),
@@ -3399,7 +2901,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     icon: Icon(
                       Icons.phone_rounded,
                       color: isDark
-                          ? const Color(0xFFC79FFF)
+                          ? const Color(0xFF5CC1FF)
                           : Colors.blue,
                       size: 18,
                     ),
@@ -3473,9 +2975,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ? const LinearGradient(
                                           colors: [
                                             Color(
-                                                0xFF8A49DF),
+                                                0xFF229ED9),
                                             Color(
-                                                0xFF5A22A6),
+                                                0xFF1C83B8),
                                           ],
                                           begin:
                                               Alignment.topLeft,
@@ -3596,7 +3098,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             color: isMe
                                                 ? (isDark
                                                     ? const Color(
-                                                        0xFFC79FFF)
+                                                        0xFF5CC1FF)
                                                     : Colors
                                                         .white70)
                                                 : Colors
@@ -3642,7 +3144,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ? Colors.red.shade700
                                     : (isDark
                                         ? const Color(
-                                            0xFF221A30)
+                                            0xFF1E1E1F)
                                         : Colors.white),
                                 shape: BoxShape.circle,
                                 boxShadow: [
@@ -3664,7 +3166,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ? Colors.white
                                       : (isDark
                                           ? const Color(
-                                              0xFF8A49DF)
+                                              0xFF229ED9)
                                           : Colors.blue),
                                   width: 1.5,
                                 ),
@@ -3678,7 +3180,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ? Colors.white
                                     : (isDark
                                         ? const Color(
-                                            0xFFC79FFF)
+                                            0xFF5CC1FF)
                                         : Colors.blue),
                                 size: 20,
                               ),
@@ -3699,7 +3201,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             decoration: BoxDecoration(
                               color: isDark
                                   ? const Color(
-                                      0xFF161022)
+                                      0xFF232326)
                                   : Colors.white,
                               borderRadius:
                                   BorderRadius.circular(
@@ -3920,7 +3422,7 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: Icon(
               Icons.attach_file_rounded,
               color: isDark
-                  ? const Color(0xFFC79FFF)
+                  ? const Color(0xFF5CC1FF)
                   : Colors.blue,
               size: 22,
             ),
@@ -3950,7 +3452,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             BoxDecoration(
                           color: isDark
                               ? const Color(
-                                  0xFF8A49DF)
+                                  0xFF229ED9)
                               : Colors
                                   .blue
                                   .shade600,
@@ -3998,7 +3500,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           shape: BoxShape.circle,
                           color: isDark
                               ? const Color(
-                                  0xFF8A49DF)
+                                  0xFF229ED9)
                               : Colors
                                   .blue
                                   .shade600,
@@ -4035,7 +3537,7 @@ class StickerIconPainter
   ) {
     final paint = Paint()
       ..color = isDark
-          ? const Color(0xFFC79FFF)
+          ? const Color(0xFF5CC1FF)
           : Colors.blue.shade700
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
@@ -4063,7 +3565,7 @@ class StickerIconPainter
 
     final fillDot = Paint()
       ..color = isDark
-          ? const Color(0xFFC79FFF)
+          ? const Color(0xFF5CC1FF)
           : Colors.blue.shade700
       ..style = PaintingStyle.fill;
 
